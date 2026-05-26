@@ -1,0 +1,664 @@
+{
+  "project": {
+    "name": "中医在线管理端前端",
+    "code": "jsmedicine-admin-frontend",
+    "sourceManual": "/Users/wangheng/qq/管理端使用手册.docx",
+    "updatedAt": "2026-05-26",
+    "description": "管理端功能清单与实现状态，后续每完成页面、接口联调或验收时同步更新。"
+  },
+  "statusLegend": {
+    "done": "已完成并通过当前验收",
+    "in_progress": "开发中",
+    "partial": "部分完成，仍有页面、接口或验收缺口",
+    "not_started": "未开始",
+    "blocked": "阻塞，依赖接口、设计或业务确认",
+    "deprecated": "已废弃或不再规划"
+  },
+  "summary": {
+    "totalModules": 15,
+    "doneModules": 1,
+    "partialModules": 0,
+    "inProgressModules": 0,
+    "notStartedModules": 14,
+    "blockedModules": 0
+  },
+  "globalRequirements": [
+    {
+      "name": "登录态与权限",
+      "status": "partial",
+      "description": "当前已实现登录态保存、路由守卫和退出登录；菜单、按钮和页面级权限后续需要结合后端权限数据完善。"
+    },
+    {
+      "name": "统一 API 封装",
+      "status": "partial",
+      "description": "当前仅有 auth API。后续模块接口需统一放入 src/api/，并补充统一错误处理、401/403 处理和分页参数约定。"
+    },
+    {
+      "name": "管理端基础布局",
+      "status": "not_started",
+      "description": "后续需要实现登录后的主布局、左侧菜单、顶部用户信息、面包屑或标签页等后台通用框架。"
+    },
+    {
+      "name": "表格与表单规范",
+      "status": "not_started",
+      "description": "后续需要形成列表、筛选、分页、弹窗、确认操作、空状态、加载状态等统一交互。"
+    }
+  ],
+  "modules": [
+    {
+      "id": "auth",
+      "name": "用户登录界面",
+      "menuPath": ["登录"],
+      "status": "done",
+      "priority": "P0",
+      "manualDescription": "账号、密码输入完毕后点击登录进入主界面；点击记住帐号密码，下次自动登录，账号和密码保存到 cookie。",
+      "implementedFiles": [
+        "src/views/LoginPage.vue",
+        "src/views/SuccessPage.vue",
+        "src/api/auth.js",
+        "src/utils/auth.js",
+        "src/utils/cookie.js",
+        "src/router.js"
+      ],
+      "features": [
+        {
+          "name": "账号密码登录",
+          "status": "done",
+          "description": "调用管理端登录接口 POST /api/v1/auth/login，登录成功后跳转成功页。"
+        },
+        {
+          "name": "记住帐号密码",
+          "status": "done",
+          "description": "勾选后把用户名、密码保存到 cookie。"
+        },
+        {
+          "name": "下次自动登录",
+          "status": "done",
+          "description": "登录页加载时读取 cookie 中的账号密码并自动发起登录。"
+        },
+        {
+          "name": "密码显示/隐藏",
+          "status": "done",
+          "description": "密码框右侧提供眼睛图标，可切换明文和隐藏状态。"
+        },
+        {
+          "name": "退出登录",
+          "status": "done",
+          "description": "调用退出接口并清除登录 token；保留记住的账号密码，且退出后不会立刻自动登录。"
+        },
+        {
+          "name": "登录后主界面",
+          "status": "partial",
+          "description": "当前仅有临时成功页，正式首页、菜单和工作桌面尚未实现。"
+        }
+      ],
+      "acceptance": [
+        "输入有效管理员账号和密码后能登录成功。",
+        "登录成功后发生页面跳转。",
+        "勾选记住帐号密码后，刷新或下次进入登录页能自动登录。",
+        "退出登录后返回登录页，并且不会立即再次自动登录。",
+        "密码框支持显示和隐藏切换。"
+      ],
+      "notes": [
+        "当前 cookie 明文保存密码是需求指定实现，上线前建议评估安全替代方案。",
+        "当前成功页仅用于验证登录跳转，后续应替换为正式管理端首页。"
+      ]
+    },
+    {
+      "id": "account",
+      "name": "账户管理",
+      "menuPath": ["账户管理"],
+      "status": "not_started",
+      "priority": "P0",
+      "manualDescription": "用户管理用于录入、查询、修改和查看系统用户信息；学员管理用于新增、修改、删除、导入和导出学员。",
+      "features": [
+        {
+          "name": "用户管理列表",
+          "status": "not_started",
+          "description": "查看系统用户列表，支持查询、查看详情、修改信息。"
+        },
+        {
+          "name": "修改用户信息",
+          "status": "not_started",
+          "description": "编辑并保存用户基础信息。"
+        },
+        {
+          "name": "学员管理列表",
+          "status": "not_started",
+          "description": "查看学员列表，支持查询、分页、查看详情。"
+        },
+        {
+          "name": "新增学员",
+          "status": "not_started",
+          "description": "录入新学员信息。"
+        },
+        {
+          "name": "修改学员信息",
+          "status": "not_started",
+          "description": "编辑并保存学员资料。"
+        },
+        {
+          "name": "删除学员",
+          "status": "not_started",
+          "description": "删除学员前需要二次确认。"
+        },
+        {
+          "name": "导入学员",
+          "status": "not_started",
+          "description": "上传学员文件并展示导入结果。"
+        },
+        {
+          "name": "导出学员列表",
+          "status": "not_started",
+          "description": "按筛选条件导出学员数据。"
+        }
+      ],
+      "acceptance": [
+        "用户和学员列表可分页展示。",
+        "查询条件生效且参数与后端接口一致。",
+        "新增、修改、删除操作有明确成功或失败提示。",
+        "导入、导出流程有加载状态和异常提示。"
+      ]
+    },
+    {
+      "id": "system",
+      "name": "系统管理",
+      "menuPath": ["系统管理"],
+      "status": "not_started",
+      "priority": "P0",
+      "manualDescription": "系统管理包含管理员管理和角色管理，可新增、修改、删除管理员，配置角色并分配权限。",
+      "features": [
+        {
+          "name": "管理员管理列表",
+          "status": "not_started",
+          "description": "查看管理员列表，支持新增、修改、删除。"
+        },
+        {
+          "name": "新增管理员",
+          "status": "not_started",
+          "description": "创建后台管理员账号。"
+        },
+        {
+          "name": "修改管理员",
+          "status": "not_started",
+          "description": "编辑管理员信息、角色或状态。"
+        },
+        {
+          "name": "删除管理员",
+          "status": "not_started",
+          "description": "删除前二次确认，并处理当前账号不可删除等限制。"
+        },
+        {
+          "name": "角色管理",
+          "status": "not_started",
+          "description": "查看、创建、修改和删除角色。"
+        },
+        {
+          "name": "权限分配",
+          "status": "not_started",
+          "description": "为角色配置菜单权限和操作权限。"
+        }
+      ],
+      "acceptance": [
+        "管理员和角色列表可正常分页。",
+        "权限配置能读取后端权限树并保存。",
+        "无权限用户不能看到或执行受限操作。"
+      ]
+    },
+    {
+      "id": "home",
+      "name": "首页管理",
+      "menuPath": ["首页管理"],
+      "status": "not_started",
+      "priority": "P1",
+      "manualDescription": "首页管理包含分类管理和首页内容配置，用于配置小程序端首页显示的分类和具体内容。",
+      "features": [
+        {
+          "name": "分类管理",
+          "status": "not_started",
+          "description": "新增、修改首页分类类型。"
+        },
+        {
+          "name": "首页内容列表",
+          "status": "not_started",
+          "description": "查看小程序首页已配置内容。"
+        },
+        {
+          "name": "首页内容配置",
+          "status": "not_started",
+          "description": "配置首页展示的资源、排序和上下架状态。"
+        }
+      ],
+      "acceptance": [
+        "分类新增和修改后能在列表中体现。",
+        "首页内容配置可保存并支持排序。",
+        "配置项资源类型和后端约定一致。"
+      ]
+    },
+    {
+      "id": "course",
+      "name": "课程管理",
+      "menuPath": ["课程管理"],
+      "status": "not_started",
+      "priority": "P0",
+      "manualDescription": "课程管理包含课程列表、新增、审核、考卷配置和视频配置，审核操作受权限控制。",
+      "features": [
+        {
+          "name": "课程列表",
+          "status": "not_started",
+          "description": "展示课程列表，支持筛选、分页、查看。"
+        },
+        {
+          "name": "新增课程",
+          "status": "not_started",
+          "description": "录入课程基础信息。"
+        },
+        {
+          "name": "课程审核",
+          "status": "not_started",
+          "description": "按权限进行通过、拒绝等审核操作。"
+        },
+        {
+          "name": "配置考卷",
+          "status": "not_started",
+          "description": "给课程关联考卷。"
+        },
+        {
+          "name": "配置视频",
+          "status": "not_started",
+          "description": "给课程配置视频资源。"
+        }
+      ],
+      "acceptance": [
+        "课程列表、筛选、分页可用。",
+        "审核按钮受权限控制。",
+        "考卷和视频配置保存后能回显。"
+      ]
+    },
+    {
+      "id": "book",
+      "name": "图书管理",
+      "menuPath": ["图书管理"],
+      "status": "not_started",
+      "priority": "P0",
+      "manualDescription": "图书管理包含图书列表、图书分类管理、新增、审核、考卷配置和章节配置。",
+      "features": [
+        {
+          "name": "图书列表",
+          "status": "not_started",
+          "description": "展示图书列表，支持筛选、分页、查看。"
+        },
+        {
+          "name": "图书分类管理",
+          "status": "not_started",
+          "description": "新增、修改、删除图书分类。"
+        },
+        {
+          "name": "新增图书",
+          "status": "not_started",
+          "description": "录入图书基础信息。"
+        },
+        {
+          "name": "图书审核",
+          "status": "not_started",
+          "description": "按权限进行审核操作。"
+        },
+        {
+          "name": "章节配置",
+          "status": "not_started",
+          "description": "配置图书章节结构。"
+        },
+        {
+          "name": "章节考卷配置",
+          "status": "not_started",
+          "description": "给图书章节关联考卷。"
+        }
+      ],
+      "acceptance": [
+        "图书和分类列表可正常维护。",
+        "章节配置层级清晰且保存后可回显。",
+        "审核操作有权限控制和操作反馈。"
+      ]
+    },
+    {
+      "id": "content",
+      "name": "资讯管理",
+      "menuPath": ["资讯管理"],
+      "status": "not_started",
+      "priority": "P1",
+      "manualDescription": "资讯管理包含帖子列表、新增、富文本编辑、删除和审核。",
+      "features": [
+        {
+          "name": "帖子列表",
+          "status": "not_started",
+          "description": "展示资讯帖子列表，支持筛选和分页。"
+        },
+        {
+          "name": "新增帖子",
+          "status": "not_started",
+          "description": "使用富文本编辑器新增资讯内容。"
+        },
+        {
+          "name": "编辑资讯",
+          "status": "not_started",
+          "description": "修改资讯标题、正文、封面等信息。"
+        },
+        {
+          "name": "删除资讯",
+          "status": "not_started",
+          "description": "删除前需要二次确认。"
+        },
+        {
+          "name": "资讯审核",
+          "status": "not_started",
+          "description": "按权限审核资讯内容。"
+        }
+      ],
+      "acceptance": [
+        "富文本内容可编辑、保存和回显。",
+        "删除和审核操作有确认与反馈。",
+        "列表筛选与分页可用。"
+      ]
+    },
+    {
+      "id": "podcast",
+      "name": "播客管理",
+      "menuPath": ["播客管理"],
+      "status": "not_started",
+      "priority": "P1",
+      "manualDescription": "播客管理包含音频列表、新增、删除、审核和播客音频配置。",
+      "features": [
+        {
+          "name": "音频列表",
+          "status": "not_started",
+          "description": "展示播客音频列表，支持筛选和分页。"
+        },
+        {
+          "name": "新增播客",
+          "status": "not_started",
+          "description": "新增播客基础信息。"
+        },
+        {
+          "name": "删除播客",
+          "status": "not_started",
+          "description": "删除前二次确认。"
+        },
+        {
+          "name": "播客审核",
+          "status": "not_started",
+          "description": "按权限进行审核操作。"
+        },
+        {
+          "name": "配置播客音频",
+          "status": "not_started",
+          "description": "上传或关联音频资源。"
+        }
+      ],
+      "acceptance": [
+        "音频资源可配置并回显。",
+        "审核操作受权限控制。",
+        "删除操作有确认提示。"
+      ]
+    },
+    {
+      "id": "topic",
+      "name": "专题管理",
+      "menuPath": ["专题管理"],
+      "status": "not_started",
+      "priority": "P1",
+      "manualDescription": "专题管理包含专题列表、新增、删除、审核，以及课程、书本、学员、资讯、博客、题库等资源配置。",
+      "features": [
+        {
+          "name": "专题列表",
+          "status": "not_started",
+          "description": "展示专题列表，支持筛选和分页。"
+        },
+        {
+          "name": "新增专题",
+          "status": "not_started",
+          "description": "新增专题基础信息。"
+        },
+        {
+          "name": "删除专题",
+          "status": "not_started",
+          "description": "删除前二次确认。"
+        },
+        {
+          "name": "专题审核",
+          "status": "not_started",
+          "description": "按权限进行审核操作。"
+        },
+        {
+          "name": "配置专题资源",
+          "status": "not_started",
+          "description": "给专题关联课程、书本、学员、资讯、博客、题库等资源。"
+        }
+      ],
+      "acceptance": [
+        "专题可新增、删除和审核。",
+        "专题资源关联配置可保存并回显。",
+        "不同资源类型选择逻辑清晰。"
+      ]
+    },
+    {
+      "id": "expert",
+      "name": "专家管理",
+      "menuPath": ["专家管理"],
+      "status": "not_started",
+      "priority": "P1",
+      "manualDescription": "专家管理包含专家列表、新增、删除、修改个人资料、查看履历，以及专家分类管理。",
+      "features": [
+        {
+          "name": "专家列表",
+          "status": "not_started",
+          "description": "展示专家列表，支持筛选和分页。"
+        },
+        {
+          "name": "新增专家",
+          "status": "not_started",
+          "description": "录入专家基础资料。"
+        },
+        {
+          "name": "修改专家资料",
+          "status": "not_started",
+          "description": "编辑专家个人资料。"
+        },
+        {
+          "name": "删除专家",
+          "status": "not_started",
+          "description": "删除前二次确认。"
+        },
+        {
+          "name": "查看个人履历",
+          "status": "not_started",
+          "description": "查看专家履历信息。"
+        },
+        {
+          "name": "专家分类管理",
+          "status": "not_started",
+          "description": "维护专家分类。"
+        }
+      ],
+      "acceptance": [
+        "专家资料新增和修改可保存回显。",
+        "专家履历可查看。",
+        "专家分类可维护。"
+      ]
+    },
+    {
+      "id": "question",
+      "name": "题库管理",
+      "menuPath": ["题库管理"],
+      "status": "not_started",
+      "priority": "P1",
+      "manualDescription": "题库管理包含题库列表、新增、删除和修改题目。",
+      "features": [
+        {
+          "name": "题库列表",
+          "status": "not_started",
+          "description": "展示题目列表，支持筛选和分页。"
+        },
+        {
+          "name": "新增题目",
+          "status": "not_started",
+          "description": "新增题目、选项和答案。"
+        },
+        {
+          "name": "修改题目",
+          "status": "not_started",
+          "description": "编辑题目内容、选项和答案。"
+        },
+        {
+          "name": "删除题目",
+          "status": "not_started",
+          "description": "删除前二次确认。"
+        }
+      ],
+      "acceptance": [
+        "题目可新增、编辑、删除。",
+        "题型、选项、答案校验完整。",
+        "列表查询和分页可用。"
+      ]
+    },
+    {
+      "id": "statistics",
+      "name": "统计管理",
+      "menuPath": ["统计管理"],
+      "status": "not_started",
+      "priority": "P2",
+      "manualDescription": "统计管理包含学时统计、学员统计、地区学员统计和学员成绩统计，可筛选查看数据。",
+      "features": [
+        {
+          "name": "学时统计",
+          "status": "not_started",
+          "description": "按条件查看学时统计数据。"
+        },
+        {
+          "name": "学员统计",
+          "status": "not_started",
+          "description": "按条件查看学员统计数据。"
+        },
+        {
+          "name": "地区学员统计",
+          "status": "not_started",
+          "description": "按地区维度查看学员数据。"
+        },
+        {
+          "name": "学员成绩统计",
+          "status": "not_started",
+          "description": "按条件查看成绩统计数据。"
+        }
+      ],
+      "acceptance": [
+        "统计筛选条件生效。",
+        "统计结果展示清晰，必要时支持图表或导出。",
+        "空数据和加载状态处理完整。"
+      ]
+    },
+    {
+      "id": "live",
+      "name": "直播管理",
+      "menuPath": ["直播管理"],
+      "status": "not_started",
+      "priority": "P1",
+      "manualDescription": "直播管理包含直播列表、新增、删除、修改和审核，审核操作受权限控制。",
+      "features": [
+        {
+          "name": "直播列表",
+          "status": "not_started",
+          "description": "展示直播列表，支持筛选和分页。"
+        },
+        {
+          "name": "新增直播",
+          "status": "not_started",
+          "description": "新增直播基础配置。"
+        },
+        {
+          "name": "修改直播",
+          "status": "not_started",
+          "description": "编辑直播配置。"
+        },
+        {
+          "name": "删除直播",
+          "status": "not_started",
+          "description": "删除前二次确认。"
+        },
+        {
+          "name": "直播审核",
+          "status": "not_started",
+          "description": "按权限进行直播审核。"
+        }
+      ],
+      "acceptance": [
+        "直播配置可新增、修改和回显。",
+        "审核按钮受权限控制。",
+        "删除操作有确认提示。"
+      ]
+    },
+    {
+      "id": "qa",
+      "name": "答疑管理",
+      "menuPath": ["答疑管理"],
+      "status": "not_started",
+      "priority": "P2",
+      "manualDescription": "答疑管理包含答疑列表、查看问题、查看答疑回复和删除。",
+      "features": [
+        {
+          "name": "答疑列表",
+          "status": "not_started",
+          "description": "展示答疑列表，支持筛选和分页。"
+        },
+        {
+          "name": "查看问题",
+          "status": "not_started",
+          "description": "查看用户提交的问题详情。"
+        },
+        {
+          "name": "查看回复",
+          "status": "not_started",
+          "description": "查看答疑回复内容。"
+        },
+        {
+          "name": "删除答疑",
+          "status": "not_started",
+          "description": "删除前二次确认。"
+        }
+      ],
+      "acceptance": [
+        "答疑列表和详情可查看。",
+        "回复内容展示完整。",
+        "删除操作有确认和反馈。"
+      ]
+    },
+    {
+      "id": "feedback",
+      "name": "反馈管理",
+      "menuPath": ["反馈管理"],
+      "status": "not_started",
+      "priority": "P2",
+      "manualDescription": "反馈管理包含反馈列表、查看反馈内容和删除。",
+      "features": [
+        {
+          "name": "反馈列表",
+          "status": "not_started",
+          "description": "展示用户反馈列表，支持筛选和分页。"
+        },
+        {
+          "name": "查看反馈内容",
+          "status": "not_started",
+          "description": "查看反馈详情。"
+        },
+        {
+          "name": "删除反馈",
+          "status": "not_started",
+          "description": "删除前二次确认。"
+        }
+      ],
+      "acceptance": [
+        "反馈列表可分页展示。",
+        "反馈详情可查看。",
+        "删除操作有确认和反馈。"
+      ]
+    }
+  ]
+}
