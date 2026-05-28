@@ -58,9 +58,9 @@
             <td v-for="column in columns" :key="column">{{ formatValue(record[column]) }}</td>
             <td class="row-actions">
               <button type="button" @click="openDetail(record)">查看</button>
-              <button v-if="!config.readonly" type="button" @click="openEdit(record)">修改</button>
+              <button v-if="canEdit" type="button" @click="openEdit(record)">修改</button>
               <button
-                v-if="!config.readonly"
+                v-if="canDelete"
                 class="danger-link"
                 type="button"
                 @click="handleDelete(record)"
@@ -176,7 +176,15 @@ const modal = reactive({
 })
 
 const columns = computed(() => config.value?.columns || [])
-const canCreate = computed(() => !config.value?.readonly && Boolean(config.value?.api?.create))
+const canCreate = computed(
+  () => !config.value?.readonly && config.value?.allowCreate !== false && Boolean(config.value?.api?.create),
+)
+const canEdit = computed(
+  () => !config.value?.readonly && config.value?.allowEdit !== false && Boolean(config.value?.api?.update),
+)
+const canDelete = computed(
+  () => config.value?.allowDelete !== false && Boolean(config.value?.api?.delete),
+)
 
 function showMessage(text, type = 'info') {
   message.value = text
@@ -283,6 +291,11 @@ function openToolbarAction(action) {
     return
   }
 
+  if (action.resultOnly) {
+    runToolbarResultAction(action)
+    return
+  }
+
   modal.open = true
   modal.title = action.label
   modal.mode = 'toolbarAction'
@@ -290,6 +303,18 @@ function openToolbarAction(action) {
   modal.record = {}
   modal.action = action
   modal.form = initForm(modal.fields)
+}
+
+async function runToolbarResultAction(action) {
+  try {
+    const result = await runResourceAction(action, {}, {})
+    modal.open = true
+    modal.title = action.label
+    modal.mode = 'detail'
+    modal.record = result.data ?? result
+  } catch (error) {
+    showMessage(error.message, 'error')
+  }
 }
 
 async function openDetail(record) {
@@ -306,11 +331,6 @@ async function openDetail(record) {
 }
 
 function openEdit(record) {
-  if (!config.value.api.update) {
-    showMessage('待接口加入', 'error')
-    return
-  }
-
   modal.open = true
   modal.title = `修改${config.value.title}`
   modal.mode = 'edit'
@@ -386,11 +406,6 @@ async function submitModal() {
 }
 
 async function handleDelete(record) {
-  if (!config.value.api.delete) {
-    showMessage('待接口加入', 'error')
-    return
-  }
-
   if (!window.confirm('确认删除该记录吗？')) {
     return
   }

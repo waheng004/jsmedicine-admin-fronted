@@ -15,3 +15,11 @@ export function logout(token) {
     },
   })
 }
+
+export function getCurrentAdmin() {
+  return request('/api/v1/auth/me')
+}
+
+export function getLoginStatus() {
+  return request('/api/v1/auth/status')
+}

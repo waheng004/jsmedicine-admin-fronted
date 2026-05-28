@@ -4,7 +4,7 @@
     "code": "jsmedicine-admin-frontend",
     "sourceManual": "/Users/wangheng/qq/管理端使用手册.docx",
     "updatedAt": "2026-05-28",
-    "description": "管理端功能清单与实现状态。当前已完成登录、后台主布局和按现有接口驱动的通用管理页面；缺接口的功能保留入口并提示待接口加入。"
+    "description": "管理端功能清单与实现状态。当前已完成登录、后台主布局、折叠菜单，并接入当前 GitHub api/api.json 中全部管理端业务接口；剩余工作主要是业务表单精细化、权限控制和少量后端缺口。"
   },
   "statusLegend": {
     "done": "已完成并通过当前验收",
@@ -15,9 +15,9 @@
     "deprecated": "已废弃或不再规划"
   },
   "summary": {
-    "totalModules": 15,
+    "totalModules": 16,
     "doneModules": 1,
-    "partialModules": 14,
+    "partialModules": 15,
     "inProgressModules": 0,
     "notStartedModules": 0,
     "blockedModules": 0
@@ -31,17 +31,17 @@
     {
       "name": "统一 API 封装",
       "status": "partial",
-      "description": "当前仅有 auth API。后续模块接口需统一放入 src/api/，并补充统一错误处理、401/403 处理和分页参数约定。"
+      "description": "已建立统一请求层和资源请求封装，已覆盖当前管理端业务接口；后续需要按复杂业务继续拆分专用 API 模块。"
     },
     {
       "name": "管理端基础布局",
-      "status": "not_started",
-      "description": "后续需要实现登录后的主布局、左侧菜单、顶部用户信息、面包屑或标签页等后台通用框架。"
+      "status": "done",
+      "description": "已实现登录后的后台主布局、左侧折叠菜单、顶部当前页面和退出登录入口。"
     },
     {
       "name": "表格与表单规范",
-      "status": "not_started",
-      "description": "后续需要形成列表、筛选、分页、弹窗、确认操作、空状态、加载状态等统一交互。"
+      "status": "partial",
+      "description": "已实现通用列表、筛选、分页、详情、弹窗表单、删除确认和操作反馈；后续需要按模块细化字段、枚举、校验和复杂配置交互。"
     }
   ],
   "modules": [
@@ -56,7 +56,8 @@
       "manualDescription": "账号、密码输入完毕后点击登录进入主界面；点击记住帐号密码，下次自动登录，账号和密码保存到 cookie。",
       "implementedFiles": [
         "src/views/LoginPage.vue",
-        "src/views/SuccessPage.vue",
+        "src/views/DashboardLayout.vue",
+        "src/views/DashboardHome.vue",
         "src/api/auth.js",
         "src/utils/auth.js",
         "src/utils/cookie.js",
@@ -90,8 +91,8 @@
         },
         {
           "name": "登录后主界面",
-          "status": "partial",
-          "description": "当前仅有临时成功页，正式首页、菜单和工作桌面尚未实现。"
+          "status": "done",
+          "description": "登录成功后进入后台工作桌面，显示左侧菜单、当前页面标题、管理员信息和退出登录入口。"
         }
       ],
       "acceptance": [
@@ -103,7 +104,7 @@
       ],
       "notes": [
         "当前 cookie 明文保存密码是需求指定实现，上线前建议评估安全替代方案。",
-        "当前成功页仅用于验证登录跳转，后续应替换为正式管理端首页。"
+        "登录后已进入正式后台壳，业务页当前采用通用资源页承接现有接口。"
       ]
     },
     {
@@ -118,43 +119,43 @@
       "features": [
         {
           "name": "用户管理列表",
-          "status": "not_started",
-          "description": "查看系统用户列表，支持查询、查看详情、修改信息。"
+          "status": "partial",
+          "description": "已接入用户列表、详情和状态修改接口；后端暂未提供用户新增、修改、删除接口。"
         },
         {
           "name": "修改用户信息",
-          "status": "not_started",
-          "description": "编辑并保存用户基础信息。"
+          "status": "blocked",
+          "description": "当前接口文档只有用户状态修改，没有用户资料修改接口。"
         },
         {
           "name": "学员管理列表",
-          "status": "not_started",
-          "description": "查看学员列表，支持查询、分页、查看详情。"
+          "status": "partial",
+          "description": "已接入学员列表、详情、维护信息和认证审核接口。"
         },
         {
           "name": "新增学员",
-          "status": "not_started",
-          "description": "录入新学员信息。"
+          "status": "blocked",
+          "description": "当前接口文档未提供学员新增接口。"
         },
         {
           "name": "修改学员信息",
-          "status": "not_started",
-          "description": "编辑并保存学员资料。"
+          "status": "partial",
+          "description": "已接入 PUT /api/v1/admin/students/{id}，表单字段后续需按 Swagger 继续精细化。"
         },
         {
           "name": "删除学员",
-          "status": "not_started",
-          "description": "删除学员前需要二次确认。"
+          "status": "blocked",
+          "description": "当前接口文档未提供学员删除接口。"
         },
         {
           "name": "导入学员",
-          "status": "not_started",
-          "description": "上传学员文件并展示导入结果。"
+          "status": "blocked",
+          "description": "当前接口文档未提供学员导入接口。"
         },
         {
           "name": "导出学员列表",
-          "status": "not_started",
-          "description": "按筛选条件导出学员数据。"
+          "status": "blocked",
+          "description": "当前接口文档未提供学员导出接口。"
         }
       ],
       "acceptance": [
@@ -164,7 +165,8 @@
         "导入、导出流程有加载状态和异常提示。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。",
+        "明确缺口：用户新增/修改/删除，学员新增/删除/导入/导出。"
       ]
     },
     {
@@ -179,33 +181,33 @@
       "features": [
         {
           "name": "管理员管理列表",
-          "status": "not_started",
-          "description": "查看管理员列表，支持新增、修改、删除。"
+          "status": "partial",
+          "description": "已接入管理员列表、详情、新增、修改、状态修改、重置密码和绑定角色；删除接口暂缺。"
         },
         {
           "name": "新增管理员",
-          "status": "not_started",
-          "description": "创建后台管理员账号。"
+          "status": "partial",
+          "description": "已接入新增管理员接口，字段校验后续继续细化。"
         },
         {
           "name": "修改管理员",
-          "status": "not_started",
-          "description": "编辑管理员信息、角色或状态。"
+          "status": "partial",
+          "description": "已接入修改管理员、状态修改、重置密码和绑定角色接口。"
         },
         {
           "name": "删除管理员",
-          "status": "not_started",
-          "description": "删除前二次确认，并处理当前账号不可删除等限制。"
+          "status": "blocked",
+          "description": "当前接口文档未提供管理员删除接口。"
         },
         {
           "name": "角色管理",
-          "status": "not_started",
-          "description": "查看、创建、修改和删除角色。"
+          "status": "partial",
+          "description": "已接入角色列表、详情、新增、修改、状态修改和绑定权限；删除接口暂缺。"
         },
         {
           "name": "权限分配",
-          "status": "not_started",
-          "description": "为角色配置菜单权限和操作权限。"
+          "status": "partial",
+          "description": "已接入权限列表和角色绑定权限接口，后续需要做权限树选择器。"
         }
       ],
       "acceptance": [
@@ -214,7 +216,8 @@
         "无权限用户不能看到或执行受限操作。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。",
+        "明确缺口：管理员删除、角色删除。"
       ]
     },
     {
@@ -229,17 +232,17 @@
       "features": [
         {
           "name": "分类管理",
-          "status": "not_started",
+          "status": "partial",
           "description": "新增、修改首页分类类型。"
         },
         {
           "name": "首页内容列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "查看小程序首页已配置内容。"
         },
         {
           "name": "首页内容配置",
-          "status": "not_started",
+          "status": "partial",
           "description": "配置首页展示的资源、排序和上下架状态。"
         }
       ],
@@ -249,7 +252,7 @@
         "配置项资源类型和后端约定一致。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -264,27 +267,27 @@
       "features": [
         {
           "name": "课程列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "展示课程列表，支持筛选、分页、查看。"
         },
         {
           "name": "新增课程",
-          "status": "not_started",
+          "status": "partial",
           "description": "录入课程基础信息。"
         },
         {
           "name": "课程审核",
-          "status": "not_started",
+          "status": "partial",
           "description": "按权限进行通过、拒绝等审核操作。"
         },
         {
           "name": "配置考卷",
-          "status": "not_started",
+          "status": "partial",
           "description": "给课程关联考卷。"
         },
         {
           "name": "配置视频",
-          "status": "not_started",
+          "status": "partial",
           "description": "给课程配置视频资源。"
         }
       ],
@@ -294,7 +297,7 @@
         "考卷和视频配置保存后能回显。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -309,32 +312,32 @@
       "features": [
         {
           "name": "图书列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "展示图书列表，支持筛选、分页、查看。"
         },
         {
           "name": "图书分类管理",
-          "status": "not_started",
+          "status": "partial",
           "description": "新增、修改、删除图书分类。"
         },
         {
           "name": "新增图书",
-          "status": "not_started",
+          "status": "partial",
           "description": "录入图书基础信息。"
         },
         {
           "name": "图书审核",
-          "status": "not_started",
+          "status": "partial",
           "description": "按权限进行审核操作。"
         },
         {
           "name": "章节配置",
-          "status": "not_started",
+          "status": "partial",
           "description": "配置图书章节结构。"
         },
         {
           "name": "章节考卷配置",
-          "status": "not_started",
+          "status": "partial",
           "description": "给图书章节关联考卷。"
         }
       ],
@@ -344,7 +347,7 @@
         "审核操作有权限控制和操作反馈。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -359,27 +362,27 @@
       "features": [
         {
           "name": "帖子列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "展示资讯帖子列表，支持筛选和分页。"
         },
         {
           "name": "新增帖子",
-          "status": "not_started",
+          "status": "partial",
           "description": "使用富文本编辑器新增资讯内容。"
         },
         {
           "name": "编辑资讯",
-          "status": "not_started",
+          "status": "partial",
           "description": "修改资讯标题、正文、封面等信息。"
         },
         {
           "name": "删除资讯",
-          "status": "not_started",
+          "status": "partial",
           "description": "删除前需要二次确认。"
         },
         {
           "name": "资讯审核",
-          "status": "not_started",
+          "status": "partial",
           "description": "按权限审核资讯内容。"
         }
       ],
@@ -389,7 +392,7 @@
         "列表筛选与分页可用。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -404,27 +407,27 @@
       "features": [
         {
           "name": "音频列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "展示播客音频列表，支持筛选和分页。"
         },
         {
           "name": "新增播客",
-          "status": "not_started",
+          "status": "partial",
           "description": "新增播客基础信息。"
         },
         {
           "name": "删除播客",
-          "status": "not_started",
+          "status": "partial",
           "description": "删除前二次确认。"
         },
         {
           "name": "播客审核",
-          "status": "not_started",
+          "status": "partial",
           "description": "按权限进行审核操作。"
         },
         {
           "name": "配置播客音频",
-          "status": "not_started",
+          "status": "partial",
           "description": "上传或关联音频资源。"
         }
       ],
@@ -434,7 +437,7 @@
         "删除操作有确认提示。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -449,27 +452,27 @@
       "features": [
         {
           "name": "专题列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "展示专题列表，支持筛选和分页。"
         },
         {
           "name": "新增专题",
-          "status": "not_started",
+          "status": "partial",
           "description": "新增专题基础信息。"
         },
         {
           "name": "删除专题",
-          "status": "not_started",
+          "status": "partial",
           "description": "删除前二次确认。"
         },
         {
           "name": "专题审核",
-          "status": "not_started",
+          "status": "partial",
           "description": "按权限进行审核操作。"
         },
         {
           "name": "配置专题资源",
-          "status": "not_started",
+          "status": "partial",
           "description": "给专题关联课程、书本、学员、资讯、博客、题库等资源。"
         }
       ],
@@ -479,7 +482,7 @@
         "不同资源类型选择逻辑清晰。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -494,32 +497,32 @@
       "features": [
         {
           "name": "专家列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "展示专家列表，支持筛选和分页。"
         },
         {
           "name": "新增专家",
-          "status": "not_started",
+          "status": "partial",
           "description": "录入专家基础资料。"
         },
         {
           "name": "修改专家资料",
-          "status": "not_started",
+          "status": "partial",
           "description": "编辑专家个人资料。"
         },
         {
           "name": "删除专家",
-          "status": "not_started",
+          "status": "partial",
           "description": "删除前二次确认。"
         },
         {
           "name": "查看个人履历",
-          "status": "not_started",
+          "status": "partial",
           "description": "查看专家履历信息。"
         },
         {
           "name": "专家分类管理",
-          "status": "not_started",
+          "status": "partial",
           "description": "维护专家分类。"
         }
       ],
@@ -529,7 +532,7 @@
         "专家分类可维护。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -544,22 +547,22 @@
       "features": [
         {
           "name": "题库列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "展示题目列表，支持筛选和分页。"
         },
         {
           "name": "新增题目",
-          "status": "not_started",
+          "status": "partial",
           "description": "新增题目、选项和答案。"
         },
         {
           "name": "修改题目",
-          "status": "not_started",
+          "status": "partial",
           "description": "编辑题目内容、选项和答案。"
         },
         {
           "name": "删除题目",
-          "status": "not_started",
+          "status": "partial",
           "description": "删除前二次确认。"
         }
       ],
@@ -569,7 +572,7 @@
         "列表查询和分页可用。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -584,23 +587,23 @@
       "features": [
         {
           "name": "学时统计",
-          "status": "not_started",
-          "description": "按条件查看学时统计数据。"
+          "status": "partial",
+          "description": "已接入学时资源统计和学时汇总接口。"
         },
         {
           "name": "学员统计",
-          "status": "not_started",
-          "description": "按条件查看学员统计数据。"
+          "status": "partial",
+          "description": "已接入学员统计汇总接口。"
         },
         {
           "name": "地区学员统计",
-          "status": "not_started",
-          "description": "按地区维度查看学员数据。"
+          "status": "partial",
+          "description": "已接入地区统计接口。"
         },
         {
           "name": "学员成绩统计",
-          "status": "not_started",
-          "description": "按条件查看成绩统计数据。"
+          "status": "partial",
+          "description": "已接入成绩试卷统计和成绩汇总接口。"
         }
       ],
       "acceptance": [
@@ -609,7 +612,7 @@
         "空数据和加载状态处理完整。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -624,27 +627,27 @@
       "features": [
         {
           "name": "直播列表",
-          "status": "not_started",
+          "status": "partial",
           "description": "展示直播列表，支持筛选和分页。"
         },
         {
           "name": "新增直播",
-          "status": "not_started",
+          "status": "partial",
           "description": "新增直播基础配置。"
         },
         {
           "name": "修改直播",
-          "status": "not_started",
+          "status": "partial",
           "description": "编辑直播配置。"
         },
         {
           "name": "删除直播",
-          "status": "not_started",
+          "status": "partial",
           "description": "删除前二次确认。"
         },
         {
           "name": "直播审核",
-          "status": "not_started",
+          "status": "partial",
           "description": "按权限进行直播审核。"
         }
       ],
@@ -654,7 +657,7 @@
         "删除操作有确认提示。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -669,23 +672,23 @@
       "features": [
         {
           "name": "答疑列表",
-          "status": "not_started",
-          "description": "展示答疑列表，支持筛选和分页。"
+          "status": "partial",
+          "description": "已接入答疑列表接口。"
         },
         {
           "name": "查看问题",
-          "status": "not_started",
-          "description": "查看用户提交的问题详情。"
+          "status": "partial",
+          "description": "已接入答疑详情接口。"
         },
         {
           "name": "查看回复",
-          "status": "not_started",
-          "description": "查看答疑回复内容。"
+          "status": "partial",
+          "description": "已接入回复答疑接口，详情展示后续需优化为结构化展示。"
         },
         {
           "name": "删除答疑",
-          "status": "not_started",
-          "description": "删除前二次确认。"
+          "status": "partial",
+          "description": "已接入删除答疑接口。"
         }
       ],
       "acceptance": [
@@ -694,7 +697,7 @@
         "删除操作有确认和反馈。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -709,18 +712,18 @@
       "features": [
         {
           "name": "反馈列表",
-          "status": "not_started",
-          "description": "展示用户反馈列表，支持筛选和分页。"
+          "status": "partial",
+          "description": "已接入反馈列表接口。"
         },
         {
           "name": "查看反馈内容",
-          "status": "not_started",
-          "description": "查看反馈详情。"
+          "status": "partial",
+          "description": "已接入反馈详情接口。"
         },
         {
           "name": "删除反馈",
-          "status": "not_started",
-          "description": "删除前二次确认。"
+          "status": "partial",
+          "description": "已接入删除反馈接口，并接入处理反馈接口。"
         }
       ],
       "acceptance": [
@@ -729,7 +732,37 @@
         "删除操作有确认和反馈。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+      ]
+    },
+    {
+      "id": "knowledge",
+      "name": "知识库",
+      "menuPath": [
+        "知识库"
+      ],
+      "status": "partial",
+      "priority": "P2",
+      "manualDescription": "知识库包含分类管理、条目新增、修改、删除和审核。",
+      "features": [
+        {
+          "name": "知识条目列表",
+          "status": "partial",
+          "description": "已接入知识库条目列表、详情、新增、修改、删除和审核接口。"
+        },
+        {
+          "name": "知识分类管理",
+          "status": "partial",
+          "description": "已接入知识库分类列表、新增、修改和删除接口。"
+        }
+      ],
+      "acceptance": [
+        "知识条目可新增、编辑、删除和审核。",
+        "知识分类可维护。",
+        "列表查询和分页可用。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     }
   ]

@@ -27,8 +27,12 @@ export function saveLoginSession(data) {
   setCookie(TOKEN_TYPE_COOKIE, data?.tokenType || 'Bearer', maxAge)
 
   if (data?.admin) {
-    setCookie(ADMIN_COOKIE, JSON.stringify(data.admin), maxAge)
+    saveAdminInfo(data.admin, maxAge)
   }
+}
+
+export function saveAdminInfo(admin, maxAge = DEFAULT_MAX_AGE) {
+  setCookie(ADMIN_COOKIE, JSON.stringify(admin), maxAge)
 }
 
 export function clearLoginSession() {

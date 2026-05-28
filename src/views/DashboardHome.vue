@@ -10,7 +10,7 @@
     <section class="work-panel">
       <div class="section-title">
         <h2>功能进度</h2>
-        <p>按照管理端使用手册和当前后端接口整理，缺接口的操作会显示“待接口加入”。</p>
+        <p>按照管理端使用手册和当前后端接口整理，已有管理端业务接口已接入通用页面。</p>
       </div>
 
       <div class="module-grid">

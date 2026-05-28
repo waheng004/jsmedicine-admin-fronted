@@ -61,15 +61,21 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { logout } from '../api/auth'
+import { getCurrentAdmin, getLoginStatus, logout } from '../api/auth'
 import { menuGroups } from '../config/resources'
-import { clearLoginSession, getAdminInfo, getAuthToken, skipAutoLoginOnce } from '../utils/auth'
+import {
+  clearLoginSession,
+  getAdminInfo,
+  getAuthToken,
+  saveAdminInfo,
+  skipAutoLoginOnce,
+} from '../utils/auth'
 
 const route = useRoute()
 const router = useRouter()
-const admin = computed(() => getAdminInfo())
+const admin = ref(getAdminInfo())
 const adminName = computed(() => admin.value?.realName || admin.value?.username || '管理员')
 const pageTitle = computed(() => route.meta.title || '管理端')
 const openGroups = reactive({})
@@ -126,6 +132,19 @@ watch(
     syncOpenGroupByRoute(path)
   },
 )
+
+async function refreshAdminSession() {
+  await getLoginStatus()
+  const result = await getCurrentAdmin()
+  if (result.data) {
+    admin.value = result.data
+    saveAdminInfo(result.data)
+  }
+}
+
+onMounted(() => {
+  refreshAdminSession().catch(() => {})
+})
 
 async function handleLogout() {
   const token = getAuthToken()

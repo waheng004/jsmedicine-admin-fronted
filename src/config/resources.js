@@ -151,6 +151,9 @@ function resource(config) {
     pageSize: 10,
     fields: baseFields,
     actions: [],
+    allowCreate: true,
+    allowEdit: true,
+    allowDelete: true,
     ...config,
   }
 }
@@ -163,6 +166,9 @@ export const resources = {
       list: '/api/v1/admin/users',
       detail: '/api/v1/admin/users/{id}',
     },
+    allowCreate: false,
+    allowEdit: false,
+    allowDelete: false,
     columns: ['id', 'username', 'nickname', 'mobile', 'email', 'status', 'registeredAt'],
     fields: [
       { key: 'id', label: 'ID', readonly: true },
@@ -179,17 +185,18 @@ export const resources = {
         method: 'PATCH',
         fields: [{ key: 'status', label: '状态', type: 'select', options: commonStatusOptions }],
       },
-      { label: '修改资料', pending: true },
     ],
   }),
   students: resource({
     title: '学员管理',
-    description: '查看和维护学员信息，认证审核接口已提供；新增、删除、导入、导出暂待接口加入。',
+    description: '查看和维护学员信息，认证审核接口已提供；新增、删除、导入、导出暂待后端接口加入。',
     api: {
       list: '/api/v1/admin/students',
       detail: '/api/v1/admin/students/{id}',
       update: '/api/v1/admin/students/{id}',
     },
+    allowCreate: false,
+    allowDelete: false,
     columns: ['id', 'studentNo', 'realName', 'mobile', 'province', 'city', 'certificationStatus', 'status'],
     fields: [
       { key: 'studentNo', label: '学员编号' },
@@ -225,7 +232,6 @@ export const resources = {
       },
     ],
     toolbarActions: [
-      { label: '新增学员', pending: true },
       { label: '导入学员', pending: true },
       { label: '导出学员', pending: true },
     ],
@@ -239,6 +245,7 @@ export const resources = {
       create: '/api/v1/admin/system/admins',
       update: '/api/v1/admin/system/admins/{id}',
     },
+    allowDelete: false,
     columns: ['id', 'username', 'realName', 'mobile', 'email', 'status', 'lastLoginAt'],
     fields: [
       { key: 'username', label: '用户名' },
@@ -279,6 +286,7 @@ export const resources = {
       create: '/api/v1/admin/system/roles',
       update: '/api/v1/admin/system/roles/{id}',
     },
+    allowDelete: false,
     columns: ['id', 'roleCode', 'roleName', 'description', 'status', 'sortOrder'],
     fields: [
       { key: 'roleCode', label: '角色编码' },
@@ -586,6 +594,7 @@ export const resources = {
       create: '/api/v1/admin/content/files',
       delete: '/api/v1/admin/content/files/{id}',
     },
+    allowEdit: false,
     columns: ['id', 'fileName', 'fileUrl', 'fileType', 'fileSize', 'createdAt'],
     fields: [
       { key: 'fileName', label: '文件名' },
@@ -791,6 +800,14 @@ export const resources = {
     api: { list: '/api/v1/admin/statistics/study-hours/resources' },
     columns: ['resourceType', 'recordCount', 'studentCount', 'completedCount', 'totalStudyHours', 'averageProgressPercent'],
     readonly: true,
+    toolbarActions: [
+      {
+        label: '查看汇总',
+        api: '/api/v1/admin/statistics/study-hours/summary',
+        method: 'GET',
+        resultOnly: true,
+      },
+    ],
   }),
   studentStats: resource({
     title: '学员统计',
@@ -810,6 +827,14 @@ export const resources = {
     api: { list: '/api/v1/admin/statistics/exam-scores/papers' },
     columns: ['paperId', 'paperTitle', 'examCount', 'studentCount', 'passedCount', 'passRatePercent', 'averageScore'],
     readonly: true,
+    toolbarActions: [
+      {
+        label: '查看汇总',
+        api: '/api/v1/admin/statistics/exam-scores/summary',
+        method: 'GET',
+        resultOnly: true,
+      },
+    ],
   }),
   interactionStats: resource({
     title: '互动统计',
