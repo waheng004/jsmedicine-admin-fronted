@@ -54,3 +54,11 @@ export function runResourceAction(action, record, body = {}) {
 
   return bodyRequest(path, method, body)
 }
+
+export async function enrichResourceRecords(config, records) {
+  if (!config.enrichRecords || records.length === 0) {
+    return records
+  }
+
+  return config.enrichRecords(records, { request })
+}

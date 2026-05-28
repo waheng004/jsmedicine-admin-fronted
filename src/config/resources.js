@@ -1,6 +1,23 @@
 const commonStatusOptions = [
-  { label: '禁用', value: '0' },
+  { label: '未启用', value: '0' },
   { label: '启用', value: '1' },
+]
+
+const answerStatusOptions = [
+  { label: '未答复', value: '0' },
+  { label: '已答复', value: '1' },
+  { label: '已答复', value: '2' },
+]
+
+const booleanStatusOptions = [
+  { label: '否', value: '0' },
+  { label: '是', value: '1' },
+]
+
+const genderOptions = [
+  { label: '未知', value: '0' },
+  { label: '男', value: '1' },
+  { label: '女', value: '2' },
 ]
 
 const reviewStatusOptions = [
@@ -27,6 +44,248 @@ const auditFields = [
 ]
 
 const processFields = [{ key: 'processNote', label: '处理备注', type: 'textarea' }]
+
+const commonFieldLabels = {
+  id: 'ID',
+  username: '用户名',
+  nickname: '昵称',
+  realName: '姓名',
+  mobile: '手机号',
+  email: '邮箱',
+  title: '标题',
+  content: '内容',
+  status: '状态',
+  createdAt: '创建时间',
+  updatedAt: '更新时间',
+  registeredAt: '注册时间',
+  lastLoginAt: '最后登录时间',
+  sortOrder: '排序',
+  userId: '用户',
+  userName: '用户',
+  userNickname: '用户',
+  expertId: '专家',
+  expertName: '专家',
+  expertRealName: '专家',
+  studentId: '学员',
+  categoryId: '分类',
+  categoryName: '分类名称',
+  parentId: '父级',
+  roleCode: '角色编码',
+  roleName: '角色名称',
+  description: '描述',
+  permissionCode: '权限编码',
+  permissionName: '权限名称',
+  permissionType: '权限类型',
+  routePath: '路由路径',
+  apiMethod: '请求方法',
+  apiPath: '接口路径',
+  targetType: '对象类型',
+  targetId: '对象 ID',
+  beforeStatus: '变更前状态',
+  afterStatus: '变更后状态',
+  auditorId: '操作人',
+  auditedAt: '操作时间',
+  feedbackType: '反馈类型',
+  processStatus: '处理状态',
+  processedAt: '处理时间',
+  processNote: '处理备注',
+  reviewStatus: '审核状态',
+  publishStatus: '发布状态',
+  publishedAt: '发布时间',
+  certificationStatus: '认证状态',
+  avatarUrl: '头像',
+  authProvider: '登录方式',
+  wechatOpenId: '微信 OpenID',
+  wechatUnionId: '微信 UnionID',
+  profileCompleted: '资料完整',
+  gender: '性别',
+  coverUrl: '封面',
+  icon: '图标',
+  iconUrl: '图标',
+  fileUrl: '文件地址',
+  fileName: '文件名',
+  fileType: '文件类型',
+  fileSize: '文件大小',
+  audioUrl: '音频地址',
+  videoUrl: '视频地址',
+  liveUrl: '直播地址',
+  playbackUrl: '回放地址',
+  contentUrl: '内容地址',
+  durationSeconds: '时长',
+  courseName: '课程名称',
+  lecturerName: '讲师',
+  subtitle: '副标题',
+  introduction: '简介',
+  paperId: '考卷',
+  courseId: '课程',
+  bookId: '图书',
+  podcastId: '播客',
+  bookName: '图书名称',
+  author: '作者',
+  publisher: '出版社',
+  chapterName: '章节名称',
+  paperName: '考卷名称',
+  totalScore: '总分',
+  passScore: '及格分',
+  durationMinutes: '考试时长',
+  summary: '摘要',
+  authorName: '作者',
+  contentType: '内容类型',
+  learningRequirements: '学习要求',
+  itemType: '资源类型',
+  itemId: '资源',
+  organization: '机构',
+  specialty: '擅长',
+  consultEnabled: '是否可咨询',
+  consultationNotice: '咨询须知',
+  questionType: '题型',
+  question: '题目',
+  questionId: '题目',
+  questions: '题目',
+  analysis: '解析',
+  difficulty: '难度',
+  score: '分值',
+  correct: '是否正确',
+  correctAnswer: '正确答案',
+  optionKey: '选项',
+  optionContent: '选项内容',
+  options: '选项',
+  answers: '回复记录',
+  answerContent: '回复内容',
+  answeredAt: '答复时间',
+  anchorName: '主播',
+  liveStatus: '直播状态',
+  resourceType: '资源类型',
+  resourceId: '资源',
+  recordCount: '记录数',
+  studentCount: '学员数',
+  completedCount: '完成人数',
+  totalStudyHours: '总学时',
+  averageProgressPercent: '平均进度',
+  totalStudents: '学员总数',
+  enabledStudents: '启用学员',
+  approvedStudents: '已认证学员',
+  pendingCertifications: '待审核认证',
+  rejectedCertifications: '已拒绝认证',
+  linkedUsers: '关联用户数',
+  city: '城市',
+  province: '省份',
+  approvedStudentCount: '已认证学员',
+  enabledStudentCount: '启用学员',
+  paperTitle: '试卷名称',
+  examCount: '考试次数',
+  passedCount: '通过人数',
+  passRatePercent: '通过率',
+  averageScore: '平均分',
+  browseCount: '浏览数',
+  favoriteCount: '收藏数',
+  shareCount: '分享数',
+  uniqueBrowseUsers: '浏览用户数',
+  uniqueFavoriteUsers: '收藏用户数',
+  uniqueShareUsers: '分享用户数',
+  viewCount: '浏览数',
+  browseHistoryCount: '浏览记录数',
+  studySeconds: '学习时长',
+  totalStudySeconds: '总学习时长',
+  progressPercent: '进度',
+  completed: '是否完成',
+  completedAt: '完成时间',
+  startedAt: '开始学习时间',
+  lastStudiedAt: '最后学习时间',
+  enrolledAt: '报名时间',
+  submittedAt: '提交时间',
+  passed: '是否通过',
+  minScore: '最低分',
+  maxScore: '最高分',
+  startAt: '开始时间',
+  endAt: '结束时间',
+  startDate: '开始日期',
+  endDate: '结束日期',
+  contact: '联系方式',
+  district: '区县',
+  idCardNo: '身份证号',
+  positionTitle: '职称',
+  studentNo: '学员编号',
+  certificationMaterials: '认证材料',
+  certificationSubmittedAt: '认证提交时间',
+  certificationReviewedAt: '认证审核时间',
+  certificationReviewedBy: '认证审核人',
+  rejectReason: '拒绝原因',
+  auditComment: '审核意见',
+  adminId: '管理员',
+  createdBy: '创建人',
+  processedBy: '处理人',
+  lastLoginIp: '最后登录 IP',
+  roles: '角色',
+  permissions: '权限',
+  permissionCount: '权限数',
+  categoryCode: '分类编码',
+  categoryIds: '分类',
+  chapterTitle: '章节标题',
+  chapters: '章节',
+  audios: '音频',
+  videos: '视频',
+  items: '关联项',
+  keywords: '关键词',
+  linkUrl: '链接地址',
+  topicId: '专题',
+  source: '来源',
+  sourceId: '来源',
+  sourceType: '来源类型',
+  resource: '资源',
+  occurredAt: '发生时间',
+  expertCategoryId: '专家分类',
+  experienceType: '履历类型',
+  experiences: '履历',
+  assetType: '资源类型',
+  bucketName: '存储桶',
+  objectKey: '对象 Key',
+  originalName: '原始文件名',
+  storageProvider: '存储服务',
+  url: '地址',
+  user: '用户',
+  profile: '资料',
+  accessToken: '访问令牌',
+  tokenType: '令牌类型',
+  expiresIn: '有效期',
+  admin: '管理员',
+}
+
+const commonValueMaps = {
+  status: Object.fromEntries(commonStatusOptions.map((item) => [item.value, item.label])),
+  reviewStatus: Object.fromEntries(reviewStatusOptions.map((item) => [item.value, item.label])),
+  publishStatus: Object.fromEntries(publishStatusOptions.map((item) => [item.value, item.label])),
+  gender: Object.fromEntries(genderOptions.map((item) => [item.value, item.label])),
+  consultEnabled: Object.fromEntries(booleanStatusOptions.map((item) => [item.value, item.label])),
+  processStatus: { 0: '未处理', 1: '已处理' },
+  certificationStatus: { 0: '未提交', 1: '审核中', 2: '已通过', 3: '已拒绝' },
+  questionType: { 1: '单选', 2: '多选', 3: '判断', 4: '问答' },
+  difficulty: { 1: '低', 2: '中', 3: '高' },
+  liveStatus: { 0: '未开始', 1: '直播中', 2: '已结束', 3: '已取消' },
+}
+
+function pickName(data, keys, fallback) {
+  for (const key of keys) {
+    if (data?.[key]) return data[key]
+  }
+  return fallback
+}
+
+async function fetchNameMap(ids, path, keys, request) {
+  const uniqueIds = [...new Set(ids.filter((id) => id !== null && id !== undefined && id !== ''))]
+  const entries = await Promise.all(
+    uniqueIds.map(async (id) => {
+      try {
+        const result = await request(path.replace('{id}', encodeURIComponent(id)))
+        return [String(id), pickName(result.data, keys, id)]
+      } catch {
+        return [String(id), id]
+      }
+    }),
+  )
+
+  return Object.fromEntries(entries)
+}
 
 const idListFields = [
   {
@@ -89,7 +348,6 @@ export const menuGroups = [
       { title: '播客管理', route: '/content/podcasts', resource: 'podcasts' },
       { title: '播客音频', route: '/content/podcast-audios', resource: 'podcastAudios' },
       { title: '专题管理', route: '/content/topics', resource: 'topics' },
-      { title: '文件资源', route: '/content/files', resource: 'files' },
     ],
   },
   {
@@ -154,6 +412,8 @@ function resource(config) {
     allowCreate: true,
     allowEdit: true,
     allowDelete: true,
+    fieldLabels: commonFieldLabels,
+    valueMaps: commonValueMaps,
     ...config,
   }
 }
@@ -732,7 +992,40 @@ export const resources = {
       detail: '/api/v1/admin/interaction/qa/questions/{id}',
       delete: '/api/v1/admin/interaction/qa/questions/{id}',
     },
-    columns: ['id', 'title', 'userId', 'expertId', 'status', 'createdAt'],
+    columns: ['id', 'title', 'userName', 'expertName', 'status'],
+    fields: [
+      { key: 'id', label: 'ID', readonly: true },
+      { key: 'title', label: '标题' },
+      { key: 'userName', label: '用户' },
+      { key: 'expertName', label: '专家' },
+      { key: 'status', label: '状态', type: 'select', options: answerStatusOptions },
+      { key: 'content', label: '问题内容', type: 'textarea' },
+    ],
+    detailHiddenFields: ['userId', 'studentId', 'expertId', 'expertCategoryId'],
+    valueMaps: {
+      ...commonValueMaps,
+      status: Object.fromEntries(answerStatusOptions.map((item) => [item.value, item.label])),
+    },
+    async enrichRecords(records, { request }) {
+      const userNames = await fetchNameMap(
+        records.map((record) => record.userId),
+        '/api/v1/admin/users/{id}',
+        ['nickname', 'username', 'mobile'],
+        request,
+      )
+      const expertNames = await fetchNameMap(
+        records.map((record) => record.expertId),
+        '/api/v1/admin/experts/{id}',
+        ['realName', 'nickname', 'title'],
+        request,
+      )
+
+      return records.map((record) => ({
+        ...record,
+        userName: record.userNickname || record.nickname || userNames[String(record.userId)] || record.userId,
+        expertName: record.expertName || record.expertRealName || expertNames[String(record.expertId)] || record.expertId,
+      }))
+    },
     readonly: true,
     actions: [
       {

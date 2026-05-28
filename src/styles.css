@@ -704,12 +704,30 @@ input {
   border-radius: 5px;
 }
 
-.detail-json {
+.detail-list {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
   margin: 0;
   padding: 18px;
-  overflow: auto;
   color: #0f172a;
   background: #f8fafc;
+}
+
+.detail-list dt,
+.detail-list dd {
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-list dt {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.detail-list dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .edit-form {

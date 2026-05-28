@@ -55,7 +55,7 @@
             <td :colspan="columns.length + 1">暂无数据</td>
           </tr>
           <tr v-for="record in records" v-else :key="record.id || JSON.stringify(record)">
-            <td v-for="column in columns" :key="column">{{ formatValue(record[column]) }}</td>
+            <td v-for="column in columns" :key="column">{{ formatCell(record, column) }}</td>
             <td class="row-actions">
               <button type="button" @click="openDetail(record)">查看</button>
               <button v-if="canEdit" type="button" @click="openEdit(record)">修改</button>
@@ -97,7 +97,12 @@
           <button type="button" aria-label="关闭" @click="closeModal">x</button>
         </header>
 
-        <pre v-if="modal.mode === 'detail'" class="detail-json">{{ JSON.stringify(modal.record, null, 2) }}</pre>
+        <dl v-if="modal.mode === 'detail'" class="detail-list">
+          <template v-for="item in detailEntries" :key="item.key">
+            <dt>{{ item.label }}</dt>
+            <dd>{{ item.value }}</dd>
+          </template>
+        </dl>
 
         <form v-else class="edit-form" @submit.prevent="submitModal">
           <label v-for="field in modal.fields" :key="field.key">
@@ -139,6 +144,7 @@ import {
   createResource,
   deleteResource,
   detailResource,
+  enrichResourceRecords,
   pageResource,
   runResourceAction,
   updateResource,
@@ -185,6 +191,19 @@ const canEdit = computed(
 const canDelete = computed(
   () => config.value?.allowDelete !== false && Boolean(config.value?.api?.delete),
 )
+const detailEntries = computed(() => {
+  if (!modal.record) return []
+
+  const hiddenFields = new Set(config.value?.detailHiddenFields || [])
+
+  return Object.keys(modal.record)
+    .filter((key) => !hiddenFields.has(key))
+    .map((key) => ({
+      key,
+      label: getLabel(key),
+      value: formatCell(modal.record, key),
+    }))
+})
 
 function showMessage(text, type = 'info') {
   message.value = text
@@ -193,7 +212,11 @@ function showMessage(text, type = 'info') {
 
 function getLabel(key) {
   const field = config.value.fields?.find((item) => item.key === key)
-  return field?.label || key
+  return field?.label || config.value.fieldLabels?.[key] || key
+}
+
+function getField(key) {
+  return config.value.fields?.find((item) => item.key === key)
 }
 
 function normalizeRecords(data) {
@@ -228,7 +251,8 @@ async function loadData() {
     }
     const result = await pageResource(config.value, params)
     const data = result.data
-    records.value = normalizeRecords(data)
+    const normalizedRecords = normalizeRecords(data)
+    records.value = await enrichResourceRecords(config.value, normalizedRecords)
     if (!data?.records) {
       total.value = records.value.length
     }
@@ -260,10 +284,36 @@ function changePage(page) {
   loadData()
 }
 
-function formatValue(value) {
+function formatCell(record, key) {
+  const field = getField(key)
+  const value = record?.[key]
+
+  if (field?.format) {
+    return field.format(value, record)
+  }
+
+  if (field?.options) {
+    const option = field.options.find((item) => String(item.value) === String(value))
+    if (option) return option.label
+  }
+
+  if (config.value.valueMaps?.[key]) {
+    return config.value.valueMaps[key][String(value)] || formatValue(value)
+  }
+
+  return formatValue(value, key)
+}
+
+function formatValue(value, key = '') {
   if (value === null || value === undefined || value === '') return '-'
   if (Array.isArray(value)) return `${value.length} 项`
   if (typeof value === 'object') return JSON.stringify(value)
+  if (key.endsWith('At') && typeof value === 'string') {
+    const date = new Date(value)
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleString('zh-CN', { hour12: false })
+    }
+  }
   return String(value)
 }
 
@@ -320,7 +370,7 @@ async function runToolbarResultAction(action) {
 async function openDetail(record) {
   try {
     const result = await detailResource(config.value, record)
-    modal.record = result.data || record
+    modal.record = result.data ? { ...record, ...result.data } : record
   } catch {
     modal.record = record
   }
