@@ -3,8 +3,8 @@
     "name": "中医在线管理端前端",
     "code": "jsmedicine-admin-frontend",
     "sourceManual": "/Users/wangheng/qq/管理端使用手册.docx",
-    "updatedAt": "2026-05-26",
-    "description": "管理端功能清单与实现状态，后续每完成页面、接口联调或验收时同步更新。"
+    "updatedAt": "2026-05-28",
+    "description": "管理端功能清单与实现状态。当前已完成登录、后台主布局和按现有接口驱动的通用管理页面；缺接口的功能保留入口并提示待接口加入。"
   },
   "statusLegend": {
     "done": "已完成并通过当前验收",
@@ -17,9 +17,9 @@
   "summary": {
     "totalModules": 15,
     "doneModules": 1,
-    "partialModules": 0,
+    "partialModules": 14,
     "inProgressModules": 0,
-    "notStartedModules": 14,
+    "notStartedModules": 0,
     "blockedModules": 0
   },
   "globalRequirements": [
@@ -48,7 +48,9 @@
     {
       "id": "auth",
       "name": "用户登录界面",
-      "menuPath": ["登录"],
+      "menuPath": [
+        "登录"
+      ],
       "status": "done",
       "priority": "P0",
       "manualDescription": "账号、密码输入完毕后点击登录进入主界面；点击记住帐号密码，下次自动登录，账号和密码保存到 cookie。",
@@ -107,8 +109,10 @@
     {
       "id": "account",
       "name": "账户管理",
-      "menuPath": ["账户管理"],
-      "status": "not_started",
+      "menuPath": [
+        "账户管理"
+      ],
+      "status": "partial",
       "priority": "P0",
       "manualDescription": "用户管理用于录入、查询、修改和查看系统用户信息；学员管理用于新增、修改、删除、导入和导出学员。",
       "features": [
@@ -158,13 +162,18 @@
         "查询条件生效且参数与后端接口一致。",
         "新增、修改、删除操作有明确成功或失败提示。",
         "导入、导出流程有加载状态和异常提示。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "system",
       "name": "系统管理",
-      "menuPath": ["系统管理"],
-      "status": "not_started",
+      "menuPath": [
+        "系统管理"
+      ],
+      "status": "partial",
       "priority": "P0",
       "manualDescription": "系统管理包含管理员管理和角色管理，可新增、修改、删除管理员，配置角色并分配权限。",
       "features": [
@@ -203,13 +212,18 @@
         "管理员和角色列表可正常分页。",
         "权限配置能读取后端权限树并保存。",
         "无权限用户不能看到或执行受限操作。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "home",
       "name": "首页管理",
-      "menuPath": ["首页管理"],
-      "status": "not_started",
+      "menuPath": [
+        "首页管理"
+      ],
+      "status": "partial",
       "priority": "P1",
       "manualDescription": "首页管理包含分类管理和首页内容配置，用于配置小程序端首页显示的分类和具体内容。",
       "features": [
@@ -233,13 +247,18 @@
         "分类新增和修改后能在列表中体现。",
         "首页内容配置可保存并支持排序。",
         "配置项资源类型和后端约定一致。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "course",
       "name": "课程管理",
-      "menuPath": ["课程管理"],
-      "status": "not_started",
+      "menuPath": [
+        "课程管理"
+      ],
+      "status": "partial",
       "priority": "P0",
       "manualDescription": "课程管理包含课程列表、新增、审核、考卷配置和视频配置，审核操作受权限控制。",
       "features": [
@@ -273,13 +292,18 @@
         "课程列表、筛选、分页可用。",
         "审核按钮受权限控制。",
         "考卷和视频配置保存后能回显。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "book",
       "name": "图书管理",
-      "menuPath": ["图书管理"],
-      "status": "not_started",
+      "menuPath": [
+        "图书管理"
+      ],
+      "status": "partial",
       "priority": "P0",
       "manualDescription": "图书管理包含图书列表、图书分类管理、新增、审核、考卷配置和章节配置。",
       "features": [
@@ -318,13 +342,18 @@
         "图书和分类列表可正常维护。",
         "章节配置层级清晰且保存后可回显。",
         "审核操作有权限控制和操作反馈。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "content",
       "name": "资讯管理",
-      "menuPath": ["资讯管理"],
-      "status": "not_started",
+      "menuPath": [
+        "资讯管理"
+      ],
+      "status": "partial",
       "priority": "P1",
       "manualDescription": "资讯管理包含帖子列表、新增、富文本编辑、删除和审核。",
       "features": [
@@ -358,13 +387,18 @@
         "富文本内容可编辑、保存和回显。",
         "删除和审核操作有确认与反馈。",
         "列表筛选与分页可用。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "podcast",
       "name": "播客管理",
-      "menuPath": ["播客管理"],
-      "status": "not_started",
+      "menuPath": [
+        "播客管理"
+      ],
+      "status": "partial",
       "priority": "P1",
       "manualDescription": "播客管理包含音频列表、新增、删除、审核和播客音频配置。",
       "features": [
@@ -398,13 +432,18 @@
         "音频资源可配置并回显。",
         "审核操作受权限控制。",
         "删除操作有确认提示。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "topic",
       "name": "专题管理",
-      "menuPath": ["专题管理"],
-      "status": "not_started",
+      "menuPath": [
+        "专题管理"
+      ],
+      "status": "partial",
       "priority": "P1",
       "manualDescription": "专题管理包含专题列表、新增、删除、审核，以及课程、书本、学员、资讯、博客、题库等资源配置。",
       "features": [
@@ -438,13 +477,18 @@
         "专题可新增、删除和审核。",
         "专题资源关联配置可保存并回显。",
         "不同资源类型选择逻辑清晰。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "expert",
       "name": "专家管理",
-      "menuPath": ["专家管理"],
-      "status": "not_started",
+      "menuPath": [
+        "专家管理"
+      ],
+      "status": "partial",
       "priority": "P1",
       "manualDescription": "专家管理包含专家列表、新增、删除、修改个人资料、查看履历，以及专家分类管理。",
       "features": [
@@ -483,13 +527,18 @@
         "专家资料新增和修改可保存回显。",
         "专家履历可查看。",
         "专家分类可维护。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "question",
       "name": "题库管理",
-      "menuPath": ["题库管理"],
-      "status": "not_started",
+      "menuPath": [
+        "题库管理"
+      ],
+      "status": "partial",
       "priority": "P1",
       "manualDescription": "题库管理包含题库列表、新增、删除和修改题目。",
       "features": [
@@ -518,13 +567,18 @@
         "题目可新增、编辑、删除。",
         "题型、选项、答案校验完整。",
         "列表查询和分页可用。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "statistics",
       "name": "统计管理",
-      "menuPath": ["统计管理"],
-      "status": "not_started",
+      "menuPath": [
+        "统计管理"
+      ],
+      "status": "partial",
       "priority": "P2",
       "manualDescription": "统计管理包含学时统计、学员统计、地区学员统计和学员成绩统计，可筛选查看数据。",
       "features": [
@@ -553,13 +607,18 @@
         "统计筛选条件生效。",
         "统计结果展示清晰，必要时支持图表或导出。",
         "空数据和加载状态处理完整。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "live",
       "name": "直播管理",
-      "menuPath": ["直播管理"],
-      "status": "not_started",
+      "menuPath": [
+        "直播管理"
+      ],
+      "status": "partial",
       "priority": "P1",
       "manualDescription": "直播管理包含直播列表、新增、删除、修改和审核，审核操作受权限控制。",
       "features": [
@@ -593,13 +652,18 @@
         "直播配置可新增、修改和回显。",
         "审核按钮受权限控制。",
         "删除操作有确认提示。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "qa",
       "name": "答疑管理",
-      "menuPath": ["答疑管理"],
-      "status": "not_started",
+      "menuPath": [
+        "答疑管理"
+      ],
+      "status": "partial",
       "priority": "P2",
       "manualDescription": "答疑管理包含答疑列表、查看问题、查看答疑回复和删除。",
       "features": [
@@ -628,13 +692,18 @@
         "答疑列表和详情可查看。",
         "回复内容展示完整。",
         "删除操作有确认和反馈。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     },
     {
       "id": "feedback",
       "name": "反馈管理",
-      "menuPath": ["反馈管理"],
-      "status": "not_started",
+      "menuPath": [
+        "反馈管理"
+      ],
+      "status": "partial",
       "priority": "P2",
       "manualDescription": "反馈管理包含反馈列表、查看反馈内容和删除。",
       "features": [
@@ -658,6 +727,9 @@
         "反馈列表可分页展示。",
         "反馈详情可查看。",
         "删除操作有确认和反馈。"
+      ],
+      "notes": [
+        "当前已生成对应菜单和通用管理页；有后端接口的操作已接入，缺接口的操作点击提示待接口加入。"
       ]
     }
   ]

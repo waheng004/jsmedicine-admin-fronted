@@ -110,7 +110,7 @@ async function doLogin({ silent = false } = {}) {
       clearRememberedAccount()
     }
 
-    await router.replace({ name: 'success' })
+    await router.replace({ name: 'dashboard' })
   } catch (error) {
     message.value = silent ? '自动登录失败，请手动登录' : error.message
   } finally {

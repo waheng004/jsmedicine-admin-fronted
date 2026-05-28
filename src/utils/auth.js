@@ -13,6 +13,13 @@ export function getAuthToken() {
   return getCookie(TOKEN_COOKIE)
 }
 
+export function getAuthHeader() {
+  const token = getAuthToken()
+  const tokenType = getCookie(TOKEN_TYPE_COOKIE) || 'Bearer'
+
+  return token ? { Authorization: `${tokenType} ${token}` } : {}
+}
+
 export function saveLoginSession(data) {
   const maxAge = Number(data?.expiresIn) || DEFAULT_MAX_AGE
 
