@@ -247,6 +247,7 @@ input {
 .admin-shell {
   display: grid;
   grid-template-columns: 252px minmax(0, 1fr);
+  min-width: 1180px;
   min-height: 100vh;
   background: #f4f7fb;
 }
@@ -675,26 +676,8 @@ input {
 }
 
 @media (max-width: 900px) {
-  .admin-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-sidebar {
-    min-height: auto;
-  }
-
-  .admin-menu {
-    max-height: 320px;
-  }
-
   .overview-grid,
   .edit-form {
     grid-template-columns: 1fr;
-  }
-
-  .resource-header,
-  .admin-topbar {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }
