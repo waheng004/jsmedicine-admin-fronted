@@ -3,8 +3,8 @@
     "name": "中医在线管理端前端",
     "code": "jsmedicine-admin-frontend",
     "sourceManual": "/Users/wangheng/qq/管理端使用手册.docx",
-    "updatedAt": "2026-05-28",
-    "description": "管理端功能清单与实现状态。当前已完成登录、后台主布局、折叠菜单，并接入当前 GitHub api/api.json 中管理端业务接口；文件资源模块按当前需求不展示，剩余工作主要是业务表单精细化和权限控制。"
+    "updatedAt": "2026-06-05",
+    "description": "管理端功能清单与实现状态。当前已完成登录、后台主布局、折叠菜单；管理端接口以仓库中的 api.json 为主要契约来源，并已接入管理端统一封面上传链路；公开文件头像默认按 https://api-test.arez.cc.cd 解析。"
   },
   "statusLegend": {
     "done": "已完成并通过当前验收",
@@ -120,53 +120,53 @@
         {
           "name": "用户管理列表",
           "status": "partial",
-          "description": "已接入用户列表、详情和状态修改接口；后端暂未提供用户新增、修改、删除接口。"
+          "description": "已接入用户列表、详情、状态修改和按 Apifox 契约提供的用户资料修改接口，并补充头像字段展示；头像地址按稳定文件路径规则解析，兼容 /api/v1/files/{id}/content，并默认补全到 https://api-test.arez.cc.cd；GitHub 后端 main/dev 当前未提供用户新增、删除接口。"
         },
         {
           "name": "修改用户信息",
-          "status": "blocked",
-          "description": "当前接口文档只有用户状态修改，没有用户资料修改接口。"
+          "status": "partial",
+          "description": "已按 Apifox 契约接入 PUT /api/v1/admin/users/{id}，支持维护昵称、个人签名、状态、身份、学员绑定、地区、机构和执业类型；联调以后端实际部署为准。"
         },
         {
           "name": "学员管理列表",
           "status": "partial",
-          "description": "已接入学员列表、详情、维护信息和认证审核接口。"
+          "description": "已接入学员列表、详情、新增、维护信息、删除、批量删除和认证审核接口，并补充头像字段展示；头像地址按稳定文件路径规则解析，兼容 /api/v1/files/{id}/content，并默认补全到 https://api-test.arez.cc.cd；新增、删除、批量删除按 Apifox 契约补充。"
         },
         {
           "name": "新增学员",
-          "status": "blocked",
-          "description": "当前接口文档未提供学员新增接口。"
+          "status": "partial",
+          "description": "已按 Apifox 契约接入 POST /api/v1/admin/students，使用 AdminStudentUpsertRequest 字段。"
         },
         {
           "name": "修改学员信息",
           "status": "partial",
-          "description": "已接入 PUT /api/v1/admin/students/{id}，表单字段后续需按 Swagger 继续精细化。"
+          "description": "已按 Apifox 契约调整为 AdminStudentUpsertRequest 字段，修改前会先拉详情回填。"
         },
         {
           "name": "删除学员",
-          "status": "blocked",
-          "description": "当前接口文档未提供学员删除接口。"
+          "status": "partial",
+          "description": "已按 Apifox 契约接入 DELETE /api/v1/admin/students/{id} 和 POST /api/v1/admin/students/batch-delete。"
         },
         {
           "name": "导入学员",
-          "status": "blocked",
-          "description": "当前接口文档未提供学员导入接口。"
+          "status": "partial",
+          "description": "已按更新后的 api.json 接入 POST /api/v1/admin/students/import，当前以前端文件选择上传方式打通接口。"
         },
         {
           "name": "导出学员列表",
-          "status": "blocked",
-          "description": "当前接口文档未提供学员导出接口。"
+          "status": "partial",
+          "description": "已按更新后的 api.json 接入 GET /api/v1/admin/students/export，当前以前端直接下载文件方式打通接口。"
         }
       ],
       "acceptance": [
         "用户和学员列表可分页展示。",
         "查询条件生效且参数与后端接口一致。",
-        "新增、修改、删除操作有明确成功或失败提示。",
+        "当前已提供接口的修改和状态操作有明确成功或失败提示。",
         "导入、导出流程有加载状态和异常提示。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。",
-        "明确缺口：用户新增/修改/删除，学员新增/删除/导入/导出。"
+        "当前已生成对应菜单和通用管理页；已按 GitHub 后端 main/dev 当前 api/api.json 对齐，并在列表/详情中补充人物头像预览；相对文件地址会按公开文件基址 https://api-test.arez.cc.cd 解析，避免头像错误指向前端域名。",
+        "明确缺口：用户新增、用户删除。"
       ]
     },
     {
@@ -182,7 +182,7 @@
         {
           "name": "管理员管理列表",
           "status": "partial",
-          "description": "已接入管理员列表、详情、新增、修改、状态修改、重置密码和绑定角色；删除接口暂缺。"
+          "description": "已接入管理员列表、详情、新增、修改、删除、状态修改、重置密码和绑定角色，并补充头像字段展示；头像地址按稳定文件路径规则解析，兼容 /api/v1/files/{id}/content，并默认补全到 https://api-test.arez.cc.cd。"
         },
         {
           "name": "新增管理员",
@@ -196,13 +196,13 @@
         },
         {
           "name": "删除管理员",
-          "status": "blocked",
-          "description": "当前接口文档未提供管理员删除接口。"
+          "status": "partial",
+          "description": "已接入 DELETE /api/v1/admin/system/admins/{id}；删除约束和失败提示以后端实际返回为准。"
         },
         {
           "name": "角色管理",
           "status": "partial",
-          "description": "已接入角色列表、详情、新增、修改、状态修改和绑定权限；删除接口暂缺。"
+          "description": "已接入角色列表、详情、新增、修改、删除、状态修改和绑定权限；后续需要做更易用的权限树选择器。"
         },
         {
           "name": "权限分配",
@@ -216,8 +216,7 @@
         "无权限用户不能看到或执行受限操作。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。",
-        "明确缺口：管理员删除、角色删除。"
+        "当前已生成对应菜单和通用管理页；已按 GitHub 后端 main/dev 当前 api/api.json 对齐，并在管理员列表/详情中补充头像预览；相对文件地址会按公开文件基址 https://api-test.arez.cc.cd 解析。"
       ]
     },
     {
@@ -499,7 +498,7 @@
         {
           "name": "专家列表",
           "status": "partial",
-          "description": "展示专家列表，支持筛选和分页。"
+          "description": "展示专家列表，支持筛选和分页，并按最新契约展示专家封面头像、性别、手机号等基础信息。"
         },
         {
           "name": "新增专家",
@@ -509,7 +508,7 @@
         {
           "name": "修改专家资料",
           "status": "partial",
-          "description": "编辑专家个人资料。"
+          "description": "编辑专家个人资料，已按最新契约补充 userId、gender、birthDate、mobile、organizationId、practiceTypeId、coverUrl 字段。"
         },
         {
           "name": "删除专家",
@@ -533,7 +532,7 @@
         "专家分类可维护。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已生成对应菜单和通用管理页；已按最新管理端专家契约补充 coverUrl 等人物画像字段，并在列表/详情中展示头像预览；相对文件地址会按公开文件基址 https://api-test.arez.cc.cd 解析。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -604,7 +603,7 @@
         {
           "name": "学员成绩统计",
           "status": "partial",
-          "description": "已接入成绩试卷统计和成绩汇总接口。"
+          "description": "已接入成绩试卷统计和成绩汇总接口；当前联调环境的 `/api/v1/admin/statistics/exam-scores/papers` 返回 500，前端已按文档接口调用。"
         }
       ],
       "acceptance": [
@@ -613,7 +612,7 @@
         "空数据和加载状态处理完整。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已生成对应菜单和通用管理页；学时、学员、地区、互动统计页首屏可正常打开。成绩统计当前受后端 500 阻塞，需后端排查数据或服务实现。"
       ]
     },
     {
@@ -658,7 +657,7 @@
         "删除操作有确认提示。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已生成对应菜单和通用管理页；已按更新后的 api.json 补充直播视频子资源入口。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -674,7 +673,7 @@
         {
           "name": "答疑列表",
           "status": "partial",
-          "description": "已接入答疑列表接口，列表显示用户和专家名称，状态显示为已答复/未答复。"
+          "description": "已接入答疑列表接口，列表显示用户和专家名称，状态已按文档对齐为 PENDING/ANSWERED/CLOSED 中文映射。"
         },
         {
           "name": "查看问题",
@@ -684,7 +683,7 @@
         {
           "name": "查看回复",
           "status": "partial",
-          "description": "已接入回复答疑接口，详情展示后续需优化为结构化展示。"
+          "description": "已接入回复答疑接口；当前以 `expertId/content/auditComment` 请求体调用时联调环境返回 500，详情展示后续需优化为结构化展示。"
         },
         {
           "name": "删除答疑",
@@ -698,7 +697,7 @@
         "删除操作有确认和反馈。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已生成对应菜单和通用管理页；列表/详情/删除可用，回复动作当前受后端 500 阻塞。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {

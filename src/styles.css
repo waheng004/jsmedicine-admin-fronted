@@ -637,6 +637,37 @@ input {
   background: #f8fafc;
 }
 
+.table-cell--image {
+  white-space: normal;
+}
+
+.image-cell {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.image-thumb {
+  width: 42px;
+  height: 42px;
+  display: block;
+  object-fit: cover;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+
+.image-link {
+  color: #0f766e;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.image-link:hover,
+.detail-media__link:hover {
+  text-decoration: underline;
+}
+
 .row-actions {
   display: flex;
   gap: 6px;
@@ -727,6 +758,53 @@ input {
 
 .detail-list dd {
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.detail-media {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-media__preview {
+  max-width: min(220px, 100%);
+  max-height: 220px;
+  display: block;
+  object-fit: cover;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+}
+
+.detail-media__link {
+  color: #0f766e;
+  text-decoration: none;
+}
+
+.cover-upload-field {
+  display: grid;
+  gap: 10px;
+}
+
+.cover-upload-field__preview {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  color: #64748b;
+}
+
+.cover-upload-field__actions {
+  display: grid;
+  gap: 8px;
+}
+
+.cover-upload-field__actions input[type='file'] {
+  display: none;
+}
+
+.cover-upload-field__path {
+  color: #0f172a;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
