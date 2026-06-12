@@ -27,7 +27,13 @@ export function saveLoginSession(data) {
   setCookie(TOKEN_TYPE_COOKIE, data?.tokenType || 'Bearer', maxAge)
 
   if (data?.admin) {
-    saveAdminInfo(data.admin, maxAge)
+    saveAdminInfo(
+      {
+        ...data.admin,
+        permissions: Array.isArray(data?.permissions) ? data.permissions : data.admin?.permissions || [],
+      },
+      maxAge,
+    )
   }
 }
 

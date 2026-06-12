@@ -24,6 +24,69 @@ function resolveUrl(path = '', base = '') {
   return joinBaseAndPath(base, path)
 }
 
+function normalizeValidationDetails(details) {
+  if (!details) return []
+
+  if (Array.isArray(details)) {
+    return details
+      .map((item) => {
+        if (typeof item === 'string') return item
+        if (!item || typeof item !== 'object') return ''
+        const field = item.field || item.name || item.property || item.path || item.param || ''
+        const message = item.message || item.defaultMessage || item.error || item.reason || ''
+        return [field, message].filter(Boolean).join('：')
+      })
+      .filter(Boolean)
+  }
+
+  if (typeof details === 'object') {
+    return Object.entries(details)
+      .flatMap(([field, value]) => {
+        if (Array.isArray(value)) {
+          return value.map((item) => `${field}：${item}`)
+        }
+        if (value && typeof value === 'object') {
+          const message = value.message || value.defaultMessage || value.error || value.reason || ''
+          return message ? [`${field}：${message}`] : []
+        }
+        return value ? [`${field}：${value}`] : []
+      })
+      .filter(Boolean)
+  }
+
+  if (typeof details === 'string') {
+    return [details]
+  }
+
+  return []
+}
+
+function extractErrorMessage(result, response) {
+  const details = normalizeValidationDetails(
+    result?.details ||
+      result?.errors ||
+      result?.data?.details ||
+      result?.data?.errors ||
+      result?.error?.details ||
+      result?.error?.errors,
+  )
+
+  if (details.length) {
+    return details.join('；')
+  }
+
+  const message = result?.message || result?.error?.message
+  if (message && message !== 'Request validation failed') {
+    return message
+  }
+
+  if (message === 'Request validation failed') {
+    return '提交内容校验失败，请检查必填项和字段格式'
+  }
+
+  return `请求失败，状态码 ${response.status}`
+}
+
 export function resolveApiUrl(path = '') {
   return resolveUrl(path, API_BASE_URL)
 }
@@ -58,7 +121,7 @@ export async function request(path, options = {}) {
   }
 
   if (!response.ok || result?.success === false) {
-    throw new Error(result?.message || `请求失败，状态码 ${response.status}`)
+    throw new Error(extractErrorMessage(result, response))
   }
 
   return result

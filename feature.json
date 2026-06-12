@@ -1,10 +1,10 @@
 {
-  "project": {
-    "name": "中医在线管理端前端",
-    "code": "jsmedicine-admin-frontend",
-    "sourceManual": "/Users/wangheng/qq/管理端使用手册.docx",
-    "updatedAt": "2026-06-05",
-    "description": "管理端功能清单与实现状态。当前已完成登录、后台主布局、折叠菜单；管理端接口以仓库中的 api.json 为主要契约来源，并已接入管理端统一封面上传链路；公开文件头像默认按 https://api-test.arez.cc.cd 解析。"
+    "project": {
+      "name": "中医在线管理端前端",
+      "code": "jsmedicine-admin-frontend",
+      "sourceManual": "/Users/wangheng/qq/管理端使用手册.docx",
+      "updatedAt": "2026-06-09",
+      "description": "管理端功能清单与实现状态。当前已完成登录、后台主布局、折叠菜单；管理端接口以仓库中的 api.json 为主要契约来源，并已接入管理端统一封面上传链路；公开文件头像默认按 https://api-test.arez.cc.cd 解析。首页管理已调整为顶级分类驱动的首页展示配置，不再维护首页子级分类，并已切换到后端统一候选资源与绑定保存契约；原“内容管理”已拆分为资讯管理、专题管理、播客管理三个独立入口，播客音频改为在播客管理主表内通过弹窗配置，专题管理已切换到最新后端契约的七类资源配置。"
   },
   "statusLegend": {
     "done": "已完成并通过当前验收",
@@ -57,7 +57,6 @@
       "implementedFiles": [
         "src/views/LoginPage.vue",
         "src/views/DashboardLayout.vue",
-        "src/views/DashboardHome.vue",
         "src/api/auth.js",
         "src/utils/auth.js",
         "src/utils/cookie.js",
@@ -92,7 +91,7 @@
         {
           "name": "登录后主界面",
           "status": "done",
-          "description": "登录成功后进入后台工作桌面，显示左侧菜单、当前页面标题、管理员信息和退出登录入口。"
+          "description": "登录成功后直接进入业务页面，显示左侧菜单、当前页面标题、管理员信息和退出登录入口。"
         }
       ],
       "acceptance": [
@@ -104,7 +103,7 @@
       ],
       "notes": [
         "当前 cookie 明文保存密码是需求指定实现，上线前建议评估安全替代方案。",
-        "登录后已进入正式后台壳，业务页当前采用通用资源页承接现有接口。"
+        "工作桌面入口已移除，登录后默认进入用户管理；业务页当前采用正式后台壳承接。"
       ]
     },
     {
@@ -125,12 +124,12 @@
         {
           "name": "修改用户信息",
           "status": "partial",
-          "description": "已按 Apifox 契约接入 PUT /api/v1/admin/users/{id}，支持维护昵称、个人签名、状态、身份、学员绑定、地区、机构和执业类型；联调以后端实际部署为准。"
+          "description": "已按 Apifox 契约接入 PUT /api/v1/admin/users/{id}，支持维护昵称、个人签名、状态、身份、学员绑定、地区、机构和执业类型；编辑时会先拉取用户详情回填必填项，避免切换身份时遗漏 role、status、nickname、profileSignature 等后端必填字段；联调以后端实际部署为准。"
         },
         {
           "name": "学员管理列表",
           "status": "partial",
-          "description": "已接入学员列表、详情、新增、维护信息、删除、批量删除和认证审核接口，并补充头像字段展示；头像地址按稳定文件路径规则解析，兼容 /api/v1/files/{id}/content，并默认补全到 https://api-test.arez.cc.cd；新增、删除、批量删除按 Apifox 契约补充。"
+          "description": "已接入学员列表、详情、新增、维护信息、删除、批量删除和认证审核接口，并补充头像字段展示；头像地址按稳定文件路径规则解析，兼容 /api/v1/files/{id}/content，并默认补全到 https://api-test.arez.cc.cd；列表额外提供用户信息入口，可直接打开对应用户资料并维护身份；新增、删除、批量删除按 Apifox 契约补充。"
         },
         {
           "name": "新增学员",
@@ -166,6 +165,7 @@
       ],
       "notes": [
         "当前已生成对应菜单和通用管理页；已按 GitHub 后端 main/dev 当前 api/api.json 对齐，并在列表/详情中补充人物头像预览；相对文件地址会按公开文件基址 https://api-test.arez.cc.cd 解析，避免头像错误指向前端域名。",
+        "学员转专家调整为先从学员管理打开用户信息，再在用户资料中切换身份，避免把用户身份变更误操作到学员档案接口上。",
         "明确缺口：用户新增、用户删除。"
       ]
     },
@@ -232,26 +232,29 @@
         {
           "name": "分类管理",
           "status": "partial",
-          "description": "新增、修改首页分类类型。"
+          "description": "已调整为仅维护首页顶级分类与展示位信息，不再维护首页子级分类；首页分类当前主要作为展示容器，来源模块在首页内容配置时单独选择。"
         },
         {
           "name": "首页内容列表",
           "status": "partial",
-          "description": "查看小程序首页已配置内容。"
+          "description": "已支持按首页顶级分类查看已配置内容，直接消费后端返回的 categoryName、contentTypeLabel、targetTitle、targetCoverUrl、targetAvailable、createdAt 等展示字段。"
         },
         {
           "name": "首页内容配置",
           "status": "partial",
-          "description": "配置首页展示的资源、排序和上下架状态。"
+          "description": "已切换为按首页分类选择展示位、按来源模块选择业务资源，并按 categoryId + contentType + targetId 保存首页绑定关系；资源型首页内容标题和封面由后端自动派生。"
         }
       ],
       "acceptance": [
-        "分类新增和修改后能在列表中体现。",
-        "首页内容配置可保存并支持排序。",
-        "配置项资源类型和后端约定一致。"
+        "首页分类新增和修改后能在列表中体现，且仅维护顶级分类。",
+        "首页内容配置可按首页分类选择展示位、按来源模块选择资源并保存绑定关系。",
+        "首页内容的资源类型需与首页分类和后端约定一致，不再出现首页子级分类配置。",
+        "首页资源型内容展示字段优先以后端派生结果为准，前端不再手工维护标题和封面。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。",
+        "首页内容当前按展示位分类 + 来源模块驱动，已覆盖课程、专题、图书、资讯、播客、知识库、直播。",
+        "首页内容保存已按后端新契约收口为轻量绑定模型，前端仅提交 categoryId、targetId、排序、上下架和时间范围等关系字段。"
       ]
     },
     {
@@ -267,36 +270,40 @@
         {
           "name": "课程列表",
           "status": "partial",
-          "description": "展示课程列表，支持筛选、分页、查看。"
+          "description": "已改为课程管理单页，支持按课程名称筛选、分页、查看，并补充课程封面展示；讲师头像兼容读取 avatarUrl / lecturerAvatarUrl 等后端扩展字段。"
         },
         {
           "name": "新增课程",
           "status": "partial",
-          "description": "录入课程基础信息。"
+          "description": "已支持录入课程基础信息并复用统一封面上传链路。"
         },
         {
           "name": "课程审核",
           "status": "partial",
-          "description": "按权限进行通过、拒绝等审核操作。"
+          "description": "已支持通过、拒绝等审核操作，并补充课程级审核日志弹窗；按钮显隐兼容当前管理员 permissions 数组。"
         },
         {
           "name": "配置考卷",
           "status": "partial",
-          "description": "给课程关联考卷。"
+          "description": "已收口到课程视频管理弹窗内，通过视频行内“配置考卷”维护 paperId，不再单独拆分课程考卷菜单。"
         },
         {
           "name": "配置视频",
           "status": "partial",
-          "description": "给课程配置视频资源。"
+          "description": "已收口到课程管理页面内，支持按课程打开视频列表，并保留显示详情、考卷配置、新增、修改、删除等子界面。"
         }
       ],
       "acceptance": [
         "课程列表、筛选、分页可用。",
         "审核按钮受权限控制。",
-        "考卷和视频配置保存后能回显。"
+        "课程封面可展示，讲师头像在后端返回对应字段时可展示。",
+        "考卷和视频配置保存后能回显，且都在课程管理内完成。",
+        "课程视频列表与审核日志等子界面不再占用侧边栏菜单，但操作链完整保留。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "课程管理已从通用资源页切换为专门页面，独立“课程视频”“考卷管理”菜单已移除，避免与手册操作路径不一致。",
+        "当前 api.json 标准契约已明确 coverUrl、paperId、课程视频列表和视频级 paperId；讲师头像字段未写入标准契约，前端已兼容读取后端扩展字段。",
+        "后续仍需继续细化字段、枚举、权限码精确映射和复杂配置交互。"
       ]
     },
     {
@@ -312,32 +319,32 @@
         {
           "name": "图书列表",
           "status": "partial",
-          "description": "展示图书列表，支持筛选、分页、查看。"
+          "description": "已切换为图书专用页面，支持按图书名搜索、分类筛选、分页、查看、修改、删除、审核和图书级考卷配置。"
         },
         {
           "name": "图书分类管理",
           "status": "partial",
-          "description": "新增、修改、删除图书分类。"
+          "description": "已切换为图书页内分类管理标签，支持按分类名搜索、新增、修改、删除；列表展示分类名称、创建时间和更新时间，并已接入分类详情、分类下图书分页、批量加入图书和批量移除图书接口。"
         },
         {
           "name": "新增图书",
           "status": "partial",
-          "description": "录入图书基础信息。"
+          "description": "支持录入图书基础信息、上传封面并维护图书级单考卷配置。"
         },
         {
           "name": "图书审核",
           "status": "partial",
-          "description": "按权限进行审核操作。"
+          "description": "图书审核按钮按管理员权限控制，调用图书审核接口并提供操作反馈。"
         },
         {
           "name": "章节配置",
           "status": "partial",
-          "description": "配置图书章节结构。"
+          "description": "图书章节收口到图书列表行内入口，支持新增、修改、删除和层级展示；列表只展示标题、起始页、张数和创建时间。"
         },
         {
           "name": "章节考卷配置",
           "status": "partial",
-          "description": "给图书章节关联考卷。"
+          "description": "支持在章节行内配置关联考卷，和章节维护统一在图书章节弹窗中完成。"
         }
       ],
       "acceptance": [
@@ -346,14 +353,17 @@
         "审核操作有权限控制和操作反馈。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "图书管理已从通用资源页切换为专门页面，独立“图书章节”左侧菜单已移除，避免与手册操作路径不一致。",
+        "当前 GitHub api/api.json 中已有的图书、图书分类、图书章节、分类图书绑定和考卷接口已全部接入；图书分类审核接口当前不存在，因此分类管理未提供审核按钮。",
+        "后续仍需继续细化字段、枚举、权限码精确映射和复杂配置交互。"
       ]
     },
     {
       "id": "content",
       "name": "资讯管理",
       "menuPath": [
-        "资讯管理"
+        "资讯管理",
+        "帖子管理"
       ],
       "status": "partial",
       "priority": "P1",
@@ -362,17 +372,17 @@
         {
           "name": "帖子列表",
           "status": "partial",
-          "description": "展示资讯帖子列表，支持筛选和分页。"
+          "description": "已切换为资讯专用页面，展示帖子列表，支持按资讯名称搜索、分页，并补充状态、封面、来源、标签和浏览量展示。"
         },
         {
           "name": "新增帖子",
           "status": "partial",
-          "description": "使用富文本编辑器新增资讯内容。"
+          "description": "已接入富文本编辑器，支持录入标题、摘要、封面、来源、标签和正文。"
         },
         {
           "name": "编辑资讯",
           "status": "partial",
-          "description": "修改资讯标题、正文、封面等信息。"
+          "description": "支持回填详情后修改资讯标题、摘要、正文、封面、来源、标签和发布时间。"
         },
         {
           "name": "删除资讯",
@@ -382,16 +392,19 @@
         {
           "name": "资讯审核",
           "status": "partial",
-          "description": "按权限审核资讯内容。"
+          "description": "支持按当前管理员 permissions 数组控制审核按钮显隐，并补充资讯审核日志查看。"
         }
       ],
       "acceptance": [
         "富文本内容可编辑、保存和回显。",
         "删除和审核操作有确认与反馈。",
-        "列表筛选与分页可用。"
+        "列表筛选与分页可用。",
+        "资讯列表可展示状态、封面和标签。",
+        "审核按钮受权限控制。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。",
+        "资讯管理已从原通用“内容管理”拆分为独立顶级入口，当前点击资讯管理后进入帖子管理页面。",
+        "资讯管理已从通用资源页切换为专门页面；当前 GitHub api/api.json 中已有的资讯管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。",
         "文件资源模块当前不作为管理端菜单展示。"
       ]
     },
@@ -408,27 +421,27 @@
         {
           "name": "音频列表",
           "status": "partial",
-          "description": "展示播客音频列表，支持筛选和分页。"
+          "description": "已切换为在播客管理主表内点击“播客音频”后弹窗展示音频列表，支持按播客上下文筛选和分页。"
         },
         {
           "name": "新增播客",
           "status": "partial",
-          "description": "新增播客基础信息。"
+          "description": "已支持新增播客基础信息，维护标题、摘要、封面、标签、讲师、发布状态和发布时间。"
         },
         {
           "name": "删除播客",
           "status": "partial",
-          "description": "删除前二次确认。"
+          "description": "已支持删除前二次确认和操作反馈。"
         },
         {
           "name": "播客审核",
           "status": "partial",
-          "description": "按权限进行审核操作。"
+          "description": "已支持按权限控制审核按钮，并提供审核日志弹窗。"
         },
         {
           "name": "配置播客音频",
           "status": "partial",
-          "description": "上传或关联音频资源。"
+          "description": "已支持在弹窗内新增、修改、删除播客音频，维护音频地址、时长、排序、考卷和状态。"
         }
       ],
       "acceptance": [
@@ -437,7 +450,8 @@
         "删除操作有确认提示。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已从通用资源页切换为播客专用管理页，并移除独立“播客音频”菜单入口；音频配置改为在播客主表行内打开弹窗处理。",
+        "当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
       ]
     },
     {
@@ -453,36 +467,37 @@
         {
           "name": "专题列表",
           "status": "partial",
-          "description": "展示专题列表，支持筛选和分页。"
+          "description": "已切换为专题专用管理页，展示标题、封面、状态、简介和专题配置入口，支持筛选和分页。"
         },
         {
           "name": "新增专题",
           "status": "partial",
-          "description": "新增专题基础信息。"
+          "description": "已支持新增专题基础信息，维护标题、封面、简介、学习要求、发布状态和发布时间。"
         },
         {
           "name": "删除专题",
           "status": "partial",
-          "description": "删除前二次确认。"
+          "description": "已支持删除前二次确认和操作反馈。"
         },
         {
           "name": "专题审核",
           "status": "partial",
-          "description": "按权限进行审核操作。"
+          "description": "已支持按权限控制审核按钮，并提供审核日志弹窗。"
         },
         {
           "name": "配置专题资源",
           "status": "partial",
-          "description": "给专题关联课程、书本、学员、资讯、博客、题库等资源。"
+          "description": "已按最新后端契约接通课程、书本、学员、资讯、播客、题库、考卷七类专题配置弹窗，支持搜索、添加、删除、排序、保存和回显。"
         }
       ],
       "acceptance": [
         "专题可新增、删除和审核。",
-        "专题资源关联配置可保存并回显。",
+        "七类专题资源关联配置可保存并回显。",
         "不同资源类型选择逻辑清晰。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；当前 GitHub api/api.json 中已有的管理端业务接口已全部接入。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已从通用资源页切换为专题专用管理页，专题配置入口集中在主表“专题配置”列中。",
+        "当前已跟进后端最新 api.json：专题详情接口已可用，专题关联保存接口支持 course、book、podcast、student、article、question、examPaper 七种 itemType。"
       ]
     },
     {
@@ -498,32 +513,32 @@
         {
           "name": "专家列表",
           "status": "partial",
-          "description": "展示专家列表，支持筛选和分页，并按最新契约展示专家封面头像、性别、手机号等基础信息。"
+          "description": "已改为专家内容专用页面，支持按专家名称、分类、状态筛选，展示头像、性别、出生年月、手机号、头衔、机构，并支持勾选批量删除。"
         },
         {
           "name": "新增专家",
           "status": "partial",
-          "description": "录入专家基础资料。"
+          "description": "已支持录入专家名称、头像、出身年月、手机号、头衔、机构、执业类型、分类、擅长、简介、咨询状态等资料，并提交后同步保存专家分类关系。"
         },
         {
           "name": "修改专家资料",
           "status": "partial",
-          "description": "编辑专家个人资料，已按最新契约补充 userId、gender、birthDate、mobile、organizationId、practiceTypeId、coverUrl 字段。"
+          "description": "已按最新契约补充 userId、gender、birthDate、mobile、organizationId、practiceTypeId、coverUrl 字段，并在编辑时回填分类与基础选项。"
         },
         {
           "name": "删除专家",
           "status": "partial",
-          "description": "删除前二次确认。"
+          "description": "支持单条删除和前端串行批量删除，删除前二次确认。"
         },
         {
           "name": "查看个人履历",
           "status": "partial",
-          "description": "查看专家履历信息。"
+          "description": "已提供履历弹窗，支持查看并维护教育经历、工作经历和成就荣誉，保存时调用替换履历接口。"
         },
         {
           "name": "专家分类管理",
           "status": "partial",
-          "description": "维护专家分类。"
+          "description": "已改为分类管理专用页面，支持按分类名称搜索、新增、修改、删除分类，并通过“二级科室”弹窗维护一级科室下的二级分类；当前后端契约未提供按分类直接绑定专家的独立接口。"
         }
       ],
       "acceptance": [
@@ -532,7 +547,8 @@
         "专家分类可维护。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；已按最新管理端专家契约补充 coverUrl 等人物画像字段，并在列表/详情中展示头像预览；相对文件地址会按公开文件基址 https://api-test.arez.cc.cd 解析。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已从通用资源页拆为专家专用双页签页面，并按最新管理端专家契约补充 coverUrl、categoryIds、experiences 等交互；相对文件地址会按公开文件基址 https://api-test.arez.cc.cd 解析。",
+        "“二级科室”已按后端专家分类两级结构契约实现为二级分类维护，不是分类对应专家列表；专家与分类关系统一通过专家编辑与 `/api/v1/admin/experts/{id}/categories` 保存。"
       ]
     },
     {
@@ -587,23 +603,23 @@
       "features": [
         {
           "name": "学时统计",
-          "status": "partial",
-          "description": "已接入学时资源统计和学时汇总接口。"
+          "status": "done",
+          "description": "已改为独立统计页，并按最新后端契约接入按地区聚合学时接口；当前页面按手册风格收敛为地区筛选加单表格展示。"
         },
         {
           "name": "学员统计",
-          "status": "partial",
-          "description": "已接入学员统计汇总接口。"
+          "status": "done",
+          "description": "已改为独立统计页，并按最新后端契约接入专题维度学员统计明细接口，支持专题、城市、区县、关键词、学习状态筛选，展示专题学员数、学习中、已完成、未学习和学时明细。"
         },
         {
           "name": "地区学员统计",
-          "status": "partial",
-          "description": "已接入地区统计接口。"
+          "status": "done",
+          "description": "已改为独立统计页，并按最新后端契约接入包含学时字段的地区统计接口，支持省/市/区筛选和学员数、总学时、平均学时、已完成人数切换展示。"
         },
         {
-          "name": "学员成绩统计",
-          "status": "partial",
-          "description": "已接入成绩试卷统计和成绩汇总接口；当前联调环境的 `/api/v1/admin/statistics/exam-scores/papers` 返回 500，前端已按文档接口调用。"
+          "name": "学员成绩管理",
+          "status": "done",
+          "description": "已改为独立成绩管理页，并按最新后端契约接入学员成绩明细分页查询和 PATCH 保存接口，支持五类成绩状态的查看与修改。"
         }
       ],
       "acceptance": [
@@ -612,7 +628,50 @@
         "空数据和加载状态处理完整。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；学时、学员、地区、互动统计页首屏可正常打开。成绩统计当前受后端 500 阻塞，需后端排查数据或服务实现。"
+        "统计管理已从通用资源页切换为独立业务页，菜单文案对齐为学时统计、学员统计、地区学员统计、学员成绩管理。",
+        "已按后端仓库最新 api.json 接入新增的统计管理接口：`/api/v1/admin/statistics/study-hours/regions`、`/api/v1/admin/statistics/topics/{topicId}/students`、`/api/v1/admin/statistics/student-scores`、`/api/v1/admin/statistics/student-scores/{studentId}`。",
+        "考核数据大屏已独立为顶级菜单入口，不再归属于统计管理子菜单。"
+      ]
+    },
+    {
+      "id": "exam_dashboard",
+      "name": "考核数据大屏",
+      "menuPath": [
+        "考核数据大屏"
+      ],
+      "status": "done",
+      "priority": "P1",
+      "manualDescription": "考核数据大屏按考核场次展示聚合指标、试卷结构、分布趋势、动态事件和参与明细。",
+      "features": [
+        {
+          "name": "考核大屏主页面",
+          "status": "done",
+          "description": "已新增与各管理页面同级的独立考核数据大屏页，按考核场次接入 dashboard 聚合接口，支持指标卡、试卷结构、分布、趋势和事件流展示。"
+        },
+        {
+          "name": "考核场次筛选",
+          "status": "done",
+          "description": "支持按考核名称、类型、状态和时间范围筛选场次，并切换当前大屏展示对象；页面顶部已补充新建考核弹窗。"
+        },
+        {
+          "name": "参与明细与导出",
+          "status": "done",
+          "description": "已接入参与明细分页和 Excel 导出接口，支持参与状态、维度编码和关键词筛选。"
+        },
+        {
+          "name": "大屏轮询刷新",
+          "status": "done",
+          "description": "页面按 15 秒轮询 dashboard 聚合接口，页面不可见时暂停。"
+        }
+      ],
+      "acceptance": [
+        "可从独立顶级菜单进入考核数据大屏。",
+        "考核场次切换后，大屏各区块数据同步刷新。",
+        "参与明细筛选、分页和导出可用。",
+        "空数据和加载状态处理完整。"
+      ],
+      "notes": [
+        "考核数据大屏已按后端接入说明改用 `/api/v1/admin/learning/exam-assessments`、`/api/v1/admin/statistics/exam-assessments/{id}/dashboard`、`/participants` 和 `/participants/export` 契约，不再复用旧考卷成绩统计接口。"
       ]
     },
     {
@@ -628,17 +687,17 @@
         {
           "name": "直播列表",
           "status": "partial",
-          "description": "展示直播列表，支持筛选和分页。"
+          "description": "已按最新 api.json 对齐 GET /api/v1/admin/live-sessions，支持 keyword、reviewStatus、liveStatus 筛选和分页。"
         },
         {
           "name": "新增直播",
           "status": "partial",
-          "description": "新增直播基础配置。"
+          "description": "已按最新接口文档与 api.json 的 LiveSessionRequest 接入基础配置，补齐 streamName、endAt 等字段，并增加主播/主讲人互补、封面稳定地址和时间先后校验。"
         },
         {
           "name": "修改直播",
           "status": "partial",
-          "description": "编辑直播配置。"
+          "description": "已按最新接口文档与 api.json 的 LiveSessionRequest 对齐编辑字段与回显，并复用创建校验规则。"
         },
         {
           "name": "删除直播",
@@ -648,7 +707,7 @@
         {
           "name": "直播审核",
           "status": "partial",
-          "description": "按权限进行直播审核。"
+          "description": "已按接口文档接入 PATCH /api/v1/admin/live-sessions/{id}/review，并按登录返回的 live:view、live:edit、live:review 权限控制操作入口。"
         }
       ],
       "acceptance": [
@@ -657,7 +716,8 @@
         "删除操作有确认提示。"
       ],
       "notes": [
-        "当前已生成对应菜单和通用管理页；已按更新后的 api.json 补充直播视频子资源入口。后续需要继续细化字段、枚举、校验、权限和复杂配置交互。"
+        "当前已生成对应菜单和通用管理页；2026-06-11 已按 GitHub main 分支最新 api/api.json 与《管理端直播前端接入说明》核对并更新直播主资源字段、筛选能力、时间校验、封面约束和权限控制，直播视频和直播流配置子资源入口保持最新路径。",
+        "直播流配置页已补充 OBS 服务器拆分展示，便于运营直接按文档进行推流配置。后续仍需继续细化状态轮询与更完整的专用交互。"
       ]
     },
     {

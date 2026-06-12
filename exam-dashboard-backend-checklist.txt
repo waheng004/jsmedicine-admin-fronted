@@ -1,0 +1,413 @@
+中医在线考核可视化大屏 - 后端接口确认清单
+
+说明：
+1. 这份清单用于确认“考核可视化大屏”所需的后端能力。
+2. 当前前端已确认存在题库、考卷、内容挂考卷、成绩统计等基础能力，但尚不能确认是否具备“实时考务大屏”能力。
+3. 请后端按下面每一项直接回复：已支持 / 不支持 / 计划支持，并给出实际接口路径、请求参数、返回示例、字段说明。
+
+一、当前前端已确认接入的能力
+
+1. 题库管理
+- 题目管理
+- 题库分类管理
+
+2. 考卷管理
+- 考卷增删改查
+- 考卷替换题目
+
+3. 学习内容挂考卷
+- 课程可关联考卷
+- 课程视频可关联考卷
+- 图书可关联考卷
+- 图书章节可关联考卷
+- 播客音频可关联考卷
+
+4. 成绩统计
+- 已有按试卷统计成绩的接口能力迹象
+- 当前前端接的是：
+  - /api/v1/admin/statistics/exam-scores/papers
+  - /api/v1/admin/statistics/exam-scores/summary
+- 但联调环境中 /api/v1/admin/statistics/exam-scores/papers 当前返回 500，需确认是接口未完成、数据异常还是环境问题
+
+二、请后端先确认的核心业务问题
+
+1. 当前系统里的“考核”业务实体到底是什么？
+- 是“考卷”本身就等于一次考核？
+- 还是存在独立的“考试/考核场次”实体？
+- 如果有独立实体，请提供命名：
+  - exam
+  - examTask
+  - assessment
+  - paperSession
+  - 其他
+
+2. 一个考卷是否可以被多个考核场次重复使用？
+- 例如同一张 A 卷，被用于：
+  - 20 级补考
+  - 21 级期末考
+  - 某地区补修考核
+
+3. 当前系统是否记录“学员参加一次考试”的过程数据？
+- 开始答题时间
+- 交卷时间
+- 是否缺考
+- 是否超时
+- 当前是否仍在考试中
+- 本次得分
+- 是否合格
+- 所属地区/单位/班级
+
+4. 当前系统是否支持“实时”状态汇总？
+- 是否有 WebSocket
+- 是否有 SSE
+- 如果都没有，是否支持前端每 10 秒或 30 秒轮询的聚合接口
+
+5. 当前系统是否存在“考试倒计时”的统一来源？
+- 考试开始时间
+- 考试结束时间
+- 是否允许补考单独配置时间段
+
+三、大屏目标说明
+
+我们计划做的是“考核可视化大屏”，不是普通成绩列表页。
+
+第一版目标展示以下内容：
+- 当前考核名称
+- 当前考核时间范围
+- 剩余倒计时
+- 试卷结构信息
+- 应考人数
+- 实考人数
+- 缺考人数
+- 考试中人数
+- 已完成人数
+- 合格人数
+- 各地区/各单位分布
+- 通过率
+- 平均分
+- 交卷趋势
+
+如果后端没有实时能力，第一版也可以先做成“准实时大屏”，即前端每 30 秒轮询一次汇总接口。
+
+四、建议后端提供的接口清单
+
+以下是建议接口，不要求路径完全一致，但能力需要覆盖。
+
+1. 考核列表接口
+用途：
+- 让前端选择“当前展示哪一场考核”
+
+建议接口：
+- GET /api/v1/admin/exams
+
+建议查询参数：
+- page
+- size
+- keyword
+- status
+- startDate
+- endDate
+
+建议返回字段：
+- id
+- examName
+- paperId
+- paperName
+- examType
+- status
+- startAt
+- endAt
+- regionScope
+- totalCandidates
+- createdAt
+
+2. 单场考核概览接口
+用途：
+- 大屏顶部卡片和左侧核心指标
+
+建议接口：
+- GET /api/v1/admin/exams/{examId}/overview
+
+建议返回字段：
+- examId
+- examName
+- paperId
+- paperName
+- examType
+- status
+- startAt
+- endAt
+- serverTime
+- countdownSeconds
+- totalCandidates
+- actualCandidates
+- absentCandidates
+- inProgressCandidates
+- finishedCandidates
+- passedCandidates
+- failedCandidates
+- passRatePercent
+- averageScore
+- minScore
+- maxScore
+
+补充说明：
+- serverTime 必须返回，避免前端倒计时因本地时间误差不准
+- countdownSeconds 建议后端直接算好
+
+3. 试卷结构信息接口
+用途：
+- 大屏左侧“考核信息”区域
+
+建议接口：
+- GET /api/v1/admin/exams/{examId}/paper-structure
+
+建议返回字段：
+- paperId
+- paperName
+- totalScore
+- passScore
+- durationMinutes
+- questionCount
+- sections
+
+sections 数组建议字段：
+- sectionName
+- questionType
+- questionCount
+- scorePerQuestion
+- totalSectionScore
+
+4. 地区/单位分布统计接口
+用途：
+- 大屏柱状图
+- 展示应考、实考、缺考、考试中、已完成、合格等维度
+
+建议接口：
+- GET /api/v1/admin/exams/{examId}/region-stats
+
+建议查询参数：
+- dimension=province|city|district|hospital|school|class
+
+建议返回字段：
+- dimension
+- items
+
+items 数组建议字段：
+- regionCode
+- regionName
+- totalCandidates
+- actualCandidates
+- absentCandidates
+- inProgressCandidates
+- finishedCandidates
+- passedCandidates
+- failedCandidates
+- passRatePercent
+- averageScore
+
+5. 趋势统计接口
+用途：
+- 展示一段时间内考试进度变化
+- 可以做折线图或柱状图
+
+建议接口：
+- GET /api/v1/admin/exams/{examId}/progress-trend
+
+建议查询参数：
+- interval=5m|10m|30m|1h
+
+建议返回字段：
+- interval
+- points
+
+points 数组建议字段：
+- time
+- actualCandidates
+- inProgressCandidates
+- finishedCandidates
+- passedCandidates
+- failedCandidates
+
+6. 异常事件接口
+用途：
+- 大屏右侧或底部滚动告警
+- 展示考试异常、超时、强制交卷、掉线等事件
+
+建议接口：
+- GET /api/v1/admin/exams/{examId}/events
+
+建议查询参数：
+- page
+- size
+- eventType
+- startAt
+- endAt
+
+建议返回字段：
+- id
+- eventType
+- studentId
+- studentName
+- regionName
+- occurredAt
+- description
+
+建议事件类型：
+- ENTER_EXAM
+- SUBMIT_EXAM
+- TIMEOUT
+- FORCE_SUBMIT
+- DISCONNECT
+- RELOGIN
+- ABNORMAL_EXIT
+
+7. 考生明细接口
+用途：
+- 后续大屏点击钻取
+- 查看某地区有哪些人未考、在考、已完成、未通过
+
+建议接口：
+- GET /api/v1/admin/exams/{examId}/candidates
+
+建议查询参数：
+- page
+- size
+- keyword
+- regionCode
+- status
+- passStatus
+
+建议返回字段：
+- studentId
+- studentName
+- phone
+- idCardMasked
+- regionCode
+- regionName
+- organizationName
+- startedAt
+- submittedAt
+- status
+- score
+- passed
+
+8. 汇总接口
+用途：
+- 首页只取一份总数据，降低前端首屏加载复杂度
+
+建议接口：
+- GET /api/v1/admin/exams/{examId}/dashboard
+
+建议返回结构：
+- overview
+- paperStructure
+- regionStats
+- trend
+- latestEvents
+
+说明：
+- 如果后端愿意，也可以优先给这个聚合接口，前端会更容易落地
+
+五、实时能力要求
+
+如果要做真正实时大屏，请后端确认以下方案选哪一种：
+
+方案 A：WebSocket
+- 推荐
+- 前端进入大屏后订阅 examId 对应频道
+- 人数变化、交卷、异常事件实时推送
+
+方案 B：SSE
+- 可以接受
+- 服务端单向推送统计变化
+
+方案 C：轮询
+- 第一版可接受
+- 请提供稳定的聚合接口
+- 建议支持 10 秒或 30 秒轮询
+
+六、需要后端明确的枚举和值域
+
+请提供以下枚举的实际取值和中文含义：
+
+1. 考核状态 status
+- 未开始
+- 进行中
+- 已结束
+- 已取消
+- 已归档
+
+2. 考生考试状态 candidateStatus
+- 待考
+- 考试中
+- 已交卷
+- 缺考
+- 超时
+- 异常中断
+
+3. 合格状态 passStatus
+- 合格
+- 不合格
+- 未判定
+
+4. 考试类型 examType
+- 正考
+- 补考
+- 模拟考
+- 其他
+
+七、接口返回规范要求
+
+1. 所有聚合接口请统一返回：
+- success / code / message
+- data
+
+2. 时间字段请明确时区和格式：
+- 推荐 ISO 8601
+- 例如 2026-06-08T14:30:00+08:00
+
+3. 百分比字段请确认单位：
+- 返回 86.5 代表 86.5%
+- 还是返回 0.865
+
+4. 数值字段请避免返回字符串
+- 人数、分数、倒计时秒数，尽量返回 number
+
+5. 空数据场景请返回空数组或 0，不要直接 500
+
+八、如果当前后端还没有完整大屏能力，请至少优先补这 4 个接口
+
+第一优先级：
+1. GET /api/v1/admin/exams
+2. GET /api/v1/admin/exams/{examId}/overview
+3. GET /api/v1/admin/exams/{examId}/paper-structure
+4. GET /api/v1/admin/exams/{examId}/region-stats
+
+有了这 4 个接口，前端就能先做第一版静态/准实时大屏。
+
+九、请后端最终回复时直接给出以下内容
+
+请按下面格式回复：
+
+1. 已有接口
+- 路径
+- 方法
+- 参数
+- 返回示例
+
+2. 需新增接口
+- 路径
+- 方法
+- 预计完成时间
+
+3. 当前阻塞项
+- 数据源缺失
+- 业务实体未确定
+- 实时推送暂不支持
+- 其他
+
+4. 关于当前成绩统计 500 问题
+- /api/v1/admin/statistics/exam-scores/papers 为什么返回 500
+- 是环境数据问题、服务异常，还是接口未完成
+

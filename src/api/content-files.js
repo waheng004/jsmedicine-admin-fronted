@@ -1,4 +1,5 @@
-import { bodyRequest, getJsonData, rawRequest } from './http'
+import { bodyRequest, getJsonData, rawRequest, resolveApiUrl } from './http'
+import { getAuthHeader } from '../utils/auth'
 
 export function createCoverUploadUrl({ usage, originalName, contentType, fileSize }) {
   return bodyRequest('/api/v1/admin/content/files/covers/upload-url', 'POST', {
@@ -49,6 +50,38 @@ export async function uploadCoverFile(file, usage) {
   })
 
   return confirmResult?.data || confirmResult
+}
+
+export async function uploadMediaFile(file, assetType) {
+  // Step 1: 申请媒体上传地址
+  const uploadMetaResult = await bodyRequest('/api/v1/admin/content/files/media/upload-url', 'POST', {
+    usage: assetType,
+    originalName: file.name,
+    contentType: file.type,
+    fileSize: file.size,
+  })
+  const uploadMeta = uploadMetaResult?.data || uploadMetaResult
+
+  // Step 2: PUT 文件到 OSS
+  const putResponse = await fetch(uploadMeta.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  })
+
+  if (!putResponse.ok) {
+    throw new Error(`文件上传失败，状态码 ${putResponse.status}`)
+  }
+
+  // Step 3: 确认上传，获取稳定 URL
+  const confirmResult = await bodyRequest('/api/v1/admin/content/files/media/confirm', 'POST', {
+    usage: assetType,
+    objectKey: uploadMeta.objectKey,
+    originalName: file.name,
+  })
+
+  const mediaAsset = confirmResult?.data || confirmResult
+  return mediaAsset?.mediaUrl || mediaAsset?.coverUrl || ''
 }
 
 export async function listFileAssets(params = {}) {

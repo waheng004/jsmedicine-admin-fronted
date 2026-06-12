@@ -77,6 +77,21 @@ const auditFields = [
 
 const processFields = [{ key: 'processNote', label: '处理备注', type: 'textarea' }]
 
+const livePermissionRules = {
+  view: {
+    anyOf: ['live:view'],
+    keywordGroups: [['live', 'view']],
+  },
+  edit: {
+    anyOf: ['live:edit'],
+    keywordGroups: [['live', 'edit'], ['live', 'update'], ['live', 'create']],
+  },
+  review: {
+    anyOf: ['live:review'],
+    keywordGroups: [['live', 'review']],
+  },
+}
+
 const commonFieldLabels = {
   id: 'ID',
   name: '名称',
@@ -208,7 +223,13 @@ const commonFieldLabels = {
   answerContent: '回复内容',
   answeredAt: '答复时间',
   anchorName: '主播',
+  streamName: '流名称',
   liveStatus: '直播状态',
+  publishUrl: '推流地址',
+  publishServer: 'OBS 服务器',
+  httpFlvUrl: 'FLV 地址',
+  hlsUrl: 'HLS 地址',
+  callbackUrl: '回调地址',
   resourceType: '资源类型',
   resourceId: '资源',
   recordCount: '记录数',
@@ -300,6 +321,7 @@ const commonFieldLabels = {
   resource: '资源',
   targetAvailable: '资源可用',
   targetTitle: '资源标题',
+  displayCreatedAt: '创建时间',
   occurredAt: '发生时间',
   expertCategoryId: '专家分类',
   parentCategoryName: '父级分类',
@@ -389,6 +411,290 @@ function optionalNumber(value) {
   return Number(value)
 }
 
+async function requestJson(path, options = {}) {
+  const { rawRequest } = await import('../api/http.js')
+  const headers = {
+    ...(typeof options.body === 'string' ? { 'Content-Type': 'application/json' } : {}),
+    ...(options.headers || {}),
+  }
+  const response = await rawRequest(path, {
+    ...options,
+    headers,
+  })
+  const result = await response.json()
+  if (result?.success === false) {
+    throw new Error(result?.message || '请求失败')
+  }
+  return result
+}
+
+async function findExpertByUserId(userId) {
+  if (!userId) return null
+
+  try {
+    const result = await requestJson(`/api/v1/admin/experts?userId=${encodeURIComponent(userId)}&page=1&size=20`)
+    const list = Array.isArray(result?.data?.records) ? result.data.records : []
+    return list.find((item) => String(item.userId) === String(userId)) || null
+  } catch (error) {
+    if (error?.message === 'Forbidden' || error?.message === 'Internal server error') {
+      return null
+    }
+    throw error
+  }
+}
+
+async function findStudentByUserId(userId) {
+  if (!userId) return null
+
+  try {
+    const result = await requestJson(`/api/v1/admin/students?page=1&size=20&keyword=${encodeURIComponent(userId)}`)
+    const list = Array.isArray(result?.data?.records) ? result.data.records : []
+    return list.find((item) => String(item.userId) === String(userId)) || null
+  } catch (error) {
+    if (error?.message === 'Forbidden' || error?.message === 'Internal server error') {
+      return null
+    }
+    throw error
+  }
+}
+
+async function findStudentByProfile(user = {}) {
+  const mobile = user.mobile || ''
+  const realName = user.nickname || user.username || ''
+  const keyword = mobile || realName
+  if (!keyword) return null
+
+  try {
+    const result = await requestJson(`/api/v1/admin/students?page=1&size=20&keyword=${encodeURIComponent(keyword)}`)
+    const list = Array.isArray(result?.data?.records) ? result.data.records : []
+    return (
+      list.find(
+        (item) =>
+          (mobile && String(item.mobile || '') === String(mobile)) ||
+          (realName && String(item.realName || '') === String(realName)),
+      ) || null
+    )
+  } catch (error) {
+    if (error?.message === 'Forbidden' || error?.message === 'Internal server error') {
+      return null
+    }
+    throw error
+  }
+}
+
+async function prepareUserRoleTransition({ record, body }) {
+  const previousRole = record?.role || ''
+  const nextRole = body.role || previousRole
+  const userId = record?.id
+  let studentId = optionalNumber(body.studentId)
+  let createdStudentId = null
+
+  if (!userId) {
+    return { previousRole, nextRole, studentId: null, createdStudentId: null }
+  }
+
+  if (nextRole === 'STUDENT') {
+    if (!studentId) {
+      const existedStudent = (await findStudentByUserId(userId)) || (await findStudentByProfile(record || {}))
+      if (existedStudent?.id) {
+        studentId = existedStudent.id
+      } else {
+        const result = await requestJson('/api/v1/admin/students', {
+          method: 'POST',
+          body: JSON.stringify(buildStudentDraftFromUser(record || {}, body)),
+        })
+        studentId = result?.data?.id ?? null
+        createdStudentId = studentId
+      }
+    }
+
+    if (!studentId) {
+      throw new Error('切换为学员失败：未能创建或找到对应学员档案')
+    }
+
+    body.studentId = studentId
+    return { previousRole, nextRole, studentId, createdStudentId }
+  }
+
+  body.studentId = null
+  return { previousRole, nextRole, studentId: null, createdStudentId: null }
+}
+
+async function createStudentDraftRecord(user = {}, body = {}) {
+  const result = await requestJson('/api/v1/admin/students', {
+    method: 'POST',
+    body: JSON.stringify(buildStudentDraftFromUser(user, body)),
+  })
+  return result?.data || null
+}
+
+async function updateUserRoleWithFallback(record, normalizedBody) {
+  const userId = record?.id
+  try {
+    return await requestJson(`/api/v1/admin/users/${encodeURIComponent(userId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(normalizedBody),
+    })
+  } catch (error) {
+    if (!(normalizedBody.role === 'STUDENT' && normalizedBody.studentId && error?.message === 'Internal server error')) {
+      throw error
+    }
+
+    const newStudent = await createStudentDraftRecord(record || {}, normalizedBody)
+    if (!newStudent?.id) {
+      throw error
+    }
+
+    const retriedBody = {
+      ...normalizedBody,
+      studentId: newStudent.id,
+    }
+    const retriedResult = await requestJson(`/api/v1/admin/users/${encodeURIComponent(userId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(retriedBody),
+    })
+
+    retriedResult.__fallbackStudentId = newStudent.id
+    return retriedResult
+  }
+}
+
+function buildExpertDraftFromUser(user = {}, body = {}) {
+  return {
+    userId: optionalNumber(user.id),
+    realName: user.nickname || user.username || `专家${user.id}`,
+    gender: String(user.gender ?? '0'),
+    birthDate: null,
+    mobile: user.mobile || '',
+    coverUrl: user.avatarUrl || '',
+    title: '',
+    organization: body.organization || user.organization || '',
+    organizationId: optionalNumber(body.organizationId) ?? optionalNumber(user.organizationId),
+    practiceTypeId: optionalNumber(body.practiceTypeId) ?? optionalNumber(user.practiceTypeId),
+    specialty: '',
+    introduction: user.profileSignature || '',
+    status: String(body.status ?? user.status ?? '1'),
+    consultEnabled: '1',
+    consultationNotice: '',
+    sortOrder: 0,
+  }
+}
+
+function buildStudentDraftFromUser(user = {}, body = {}) {
+  return {
+    studentNo: '',
+    realName: user.nickname || user.username || `学员${user.id}`,
+    gender: String(user.gender ?? '0'),
+    age: 0,
+    educationLevel: '',
+    mobile: user.mobile || '',
+    idCardNo: '',
+    province: body.province || user.province || '',
+    provinceCode: body.provinceCode || user.provinceCode || '',
+    city: body.city || user.city || '',
+    cityCode: body.cityCode || user.cityCode || '',
+    district: body.district || user.district || '',
+    districtCode: body.districtCode || user.districtCode || '',
+    organization: body.organization || user.organization || '',
+    organizationId: optionalNumber(body.organizationId) ?? optionalNumber(user.organizationId),
+    positionTitle: '',
+    practiceTypeId: optionalNumber(body.practiceTypeId) ?? optionalNumber(user.practiceTypeId),
+    status: String(body.status ?? user.status ?? '1'),
+  }
+}
+
+async function syncUserExpertProfile({ record, body, saveResult, saveContext }) {
+  const previousRole = saveContext?.previousRole || record?.role || ''
+  const nextRole = body.role || saveResult?.data?.role || previousRole
+  const userId = record?.id || saveResult?.data?.id
+
+  if (!userId || previousRole === nextRole) {
+    return null
+  }
+
+  const messages = ['用户信息已保存']
+
+  if (nextRole === 'EXPERT') {
+    const studentRecord = (await findStudentByUserId(userId)) || (await findStudentByProfile(saveResult?.data || record || {}))
+    if (studentRecord?.id) {
+      await requestJson(`/api/v1/admin/students/${encodeURIComponent(studentRecord.id)}`, {
+        method: 'DELETE',
+      })
+      messages.push(`已自动删除学员档案 #${studentRecord.id}`)
+    }
+
+    const existed = await findExpertByUserId(userId)
+    if (!existed) {
+      const result = await requestJson('/api/v1/admin/experts', {
+        method: 'POST',
+        body: JSON.stringify(buildExpertDraftFromUser(saveResult?.data || record || {}, body)),
+      })
+      if (result?.data?.id) {
+        messages.push(`已自动创建专家档案 #${result.data.id}`)
+      } else {
+        messages.push('已自动创建专家档案')
+      }
+    } else {
+      messages.push(`已保留原专家档案 #${existed.id}`)
+    }
+
+    return {
+      message: `${messages.join('，')}。`,
+      reloadRecord: true,
+    }
+  }
+
+  if (nextRole === 'STUDENT') {
+    const existed = await findExpertByUserId(userId)
+    if (existed?.id) {
+      await requestJson(`/api/v1/admin/experts/${encodeURIComponent(existed.id)}`, {
+        method: 'DELETE',
+      })
+      messages.push(`已自动删除专家档案 #${existed.id}`)
+    }
+
+    if (saveContext?.createdStudentId) {
+      messages.push(`已自动创建学员档案 #${saveContext.createdStudentId}`)
+    } else if (saveContext?.studentId) {
+      messages.push(`已保留绑定学员档案 #${saveContext.studentId}`)
+    } else {
+      messages.push('已切换为学员身份')
+    }
+
+    return {
+      message: `${messages.join('，')}。`,
+      reloadRecord: true,
+    }
+  }
+
+  if (nextRole === 'NORMAL') {
+    const existedExpert = await findExpertByUserId(userId)
+    if (existedExpert?.id) {
+      await requestJson(`/api/v1/admin/experts/${encodeURIComponent(existedExpert.id)}`, {
+        method: 'DELETE',
+      })
+      messages.push(`已自动删除专家档案 #${existedExpert.id}`)
+    }
+
+    const existedStudent = saveContext?.studentId
+      ? { id: saveContext.studentId }
+      : (await findStudentByUserId(userId)) || (await findStudentByProfile(saveResult?.data || record || {}))
+    if (existedStudent?.id) {
+      await requestJson(`/api/v1/admin/students/${encodeURIComponent(existedStudent.id)}`, {
+        method: 'DELETE',
+      })
+      messages.push(`已自动删除学员档案 #${existedStudent.id}`)
+    }
+
+    return {
+      message: `${messages.join('，')}。`,
+      reloadRecord: true,
+    }
+  }
+
+  return null
+}
+
 async function normalizeUserUpdateBody(body) {
   let organizationId = optionalNumber(body.organizationId)
   if (!organizationId && body.organization) {
@@ -455,6 +761,80 @@ function normalizeCommonStatus(value, fallback = '1') {
   return String(value ?? fallback)
 }
 
+function normalizeDateTimeValue(value) {
+  if (!value) return null
+  return String(value)
+}
+
+function parseDateTimeValue(value) {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function validateLiveSessionPayload(body) {
+  const title = String(body.title || '').trim()
+  const anchorName = String(body.anchorName || '').trim()
+  const speakerName = String(body.speakerName || '').trim()
+  const coverUrl = String(body.coverUrl || '').trim()
+  const streamName = String(body.streamName || '').trim()
+  const startAt = normalizeDateTimeValue(body.startAt)
+  const endAt = normalizeDateTimeValue(body.endAt)
+
+  if (!title) {
+    throw new Error('请输入直播标题')
+  }
+
+  if (!anchorName && !speakerName) {
+    throw new Error('主播和主讲人至少填写一个')
+  }
+
+  if (coverUrl && !/^\/api\/v1\/files\/\d+\/content$/.test(coverUrl)) {
+    throw new Error('直播封面必须使用封面上传接口返回的稳定地址')
+  }
+
+  if (!startAt) {
+    throw new Error('请选择开始时间')
+  }
+
+  const startDate = parseDateTimeValue(startAt)
+  if (!startDate) {
+    throw new Error('开始时间格式不正确')
+  }
+
+  if (endAt) {
+    const endDate = parseDateTimeValue(endAt)
+    if (!endDate) {
+      throw new Error('结束时间格式不正确')
+    }
+
+    if (endDate.getTime() <= startDate.getTime()) {
+      throw new Error('结束时间必须晚于开始时间')
+    }
+  }
+
+  return {
+    ...body,
+    title,
+    anchorName: anchorName || speakerName,
+    speakerName: speakerName || anchorName,
+    coverUrl,
+    streamName,
+    startAt,
+    endAt,
+  }
+}
+
+function buildLivePublishServer(value, record) {
+  if (!value) return '-'
+
+  const streamName = String(record?.streamName || '').trim()
+  if (!streamName) return value
+
+  const suffix = `/${streamName}`
+  return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value
+}
+
 function pickName(data, keys, fallback) {
   for (const key of keys) {
     if (data?.[key]) return data[key]
@@ -492,6 +872,68 @@ const idListFields = [
   },
 ]
 
+const homeContentTypeOptions = [
+  { label: '资讯', value: 'article' },
+  { label: '课程', value: 'course' },
+  { label: '图书', value: 'book' },
+  { label: '知识库', value: 'knowledge' },
+  { label: '播客', value: 'podcast' },
+  { label: '专题', value: 'topic' },
+  { label: '直播', value: 'live' },
+]
+
+const homeContentResourceConfigs = {
+  article: {
+    listPath: '/api/v1/admin/content/articles',
+    titleKeys: ['title'],
+    coverKey: 'coverUrl',
+    timeKeys: ['publishedAt'],
+    typeLabel: '资讯',
+  },
+  topic: {
+    listPath: '/api/v1/admin/content/topics',
+    titleKeys: ['title'],
+    coverKey: 'coverUrl',
+    timeKeys: ['publishedAt'],
+    typeLabel: '专题',
+  },
+  course: {
+    listPath: '/api/v1/admin/learning/courses',
+    titleKeys: ['courseName', 'title'],
+    coverKey: 'coverUrl',
+    timeKeys: ['publishedAt'],
+    typeLabel: '课程',
+  },
+  book: {
+    listPath: '/api/v1/admin/learning/books',
+    titleKeys: ['bookName', 'title'],
+    coverKey: 'coverUrl',
+    timeKeys: ['publishedAt'],
+    typeLabel: '图书',
+  },
+  knowledge: {
+    listPath: '/api/v1/admin/knowledge/entries',
+    titleKeys: ['title'],
+    coverKey: 'coverUrl',
+    timeKeys: ['publishedAt', 'createdAt'],
+    typeLabel: '知识库',
+  },
+  podcast: {
+    listPath: '/api/v1/admin/content/podcasts',
+    titleKeys: ['title'],
+    coverKey: 'coverUrl',
+    timeKeys: ['publishedAt', 'createdAt'],
+    typeLabel: '播客',
+  },
+  live: {
+    listPath: '/api/v1/admin/live-sessions',
+    titleKeys: ['title'],
+    coverKey: 'coverUrl',
+    timeKeys: ['createdAt', 'startAt'],
+    typeLabel: '直播',
+  },
+}
+
 export const menuGroups = [
   {
     title: '账户管理',
@@ -505,8 +947,6 @@ export const menuGroups = [
     items: [
       { title: '管理员管理', route: '/system/admins', resource: 'admins' },
       { title: '角色管理', route: '/system/roles', resource: 'roles' },
-      { title: '权限列表', route: '/system/permissions', resource: 'permissions' },
-      { title: '审计记录', route: '/system/audit-records', resource: 'auditRecords' },
     ],
   },
   {
@@ -526,9 +966,7 @@ export const menuGroups = [
   {
     title: '课程管理',
     items: [
-      { title: '课程列表', route: '/courses', resource: 'courses' },
-      { title: '课程视频', route: '/courses/videos', resource: 'courseVideos' },
-      { title: '考卷管理', route: '/courses/exam-papers', resource: 'examPapers' },
+      { title: '课程管理', route: '/courses', resource: 'courses' },
     ],
   },
   {
@@ -536,23 +974,31 @@ export const menuGroups = [
     items: [
       { title: '图书列表', route: '/books', resource: 'books' },
       { title: '图书分类', route: '/books/categories', resource: 'bookCategories' },
-      { title: '图书章节', route: '/books/chapters', resource: 'bookChapters' },
     ],
   },
   {
-    title: '内容管理',
+    title: '资讯管理',
     items: [
-      { title: '资讯管理', route: '/content/articles', resource: 'articles' },
+      { title: '帖子管理', route: '/content/articles', resource: 'articles' },
+    ],
+  },
+  {
+    title: '播客管理',
+    items: [
       { title: '播客管理', route: '/content/podcasts', resource: 'podcasts' },
-      { title: '播客音频', route: '/content/podcast-audios', resource: 'podcastAudios' },
+    ],
+  },
+  {
+    title: '专题管理',
+    items: [
       { title: '专题管理', route: '/content/topics', resource: 'topics' },
     ],
   },
   {
     title: '专家管理',
     items: [
-      { title: '专家列表', route: '/experts', resource: 'experts' },
-      { title: '专家分类', route: '/experts/categories', resource: 'expertCategories' },
+      { title: '分类管理', route: '/experts/categories', resource: 'expertCategories' },
+      { title: '专家内容', route: '/experts', resource: 'experts' },
     ],
   },
   {
@@ -567,9 +1013,14 @@ export const menuGroups = [
     items: [
       { title: '学时统计', route: '/statistics/study-hours', resource: 'studyHoursStats' },
       { title: '学员统计', route: '/statistics/students', resource: 'studentStats' },
-      { title: '地区统计', route: '/statistics/regions', resource: 'regionStats' },
-      { title: '成绩统计', route: '/statistics/exam-scores', resource: 'examScoreStats' },
-      { title: '互动统计', route: '/statistics/interactions', resource: 'interactionStats' },
+      { title: '地区学员统计', route: '/statistics/regions', resource: 'regionStats' },
+      { title: '学员成绩管理', route: '/statistics/exam-scores', resource: 'examScoreStats' },
+    ],
+  },
+  {
+    title: '考核数据大屏',
+    items: [
+      { title: '考核数据大屏', route: '/statistics/exam-dashboard', resource: 'examDashboardStats' },
     ],
   },
   {
@@ -607,7 +1058,7 @@ const baseFields = [
 
 function resource(config) {
   return {
-    searchable: true,
+    searchable: false,
     pageSize: 10,
     fields: baseFields,
     actions: [],
@@ -631,11 +1082,42 @@ export const resources = {
     },
     allowCreate: false,
     allowDelete: false,
+    hideDetail: true,
     useDetailForEdit: true,
     bodyTransform: normalizeUserUpdateBody,
+    customUpdate: async ({ record, body }) => updateUserRoleWithFallback(record, body),
+    beforeSave: prepareUserRoleTransition,
+    afterSave: syncUserExpertProfile,
     valueMaps: userValueMaps,
     linkActions: [
-      { label: '学员信息', path: '/account/students', paramKey: 'studentId', queryKey: 'keyword' },
+      {
+        label: '学员信息',
+        path: '/account/students',
+        paramKey: 'studentId',
+        queryKey: 'keyword',
+        visibleKey: 'role',
+        visibleValue: 'STUDENT',
+        useDetail: true,
+        lookupApi: '/api/v1/admin/users',
+        lookupParamKey: 'id',
+        lookupResultKey: 'studentId',
+        detailApi: '/api/v1/admin/students/{id}',
+      },
+      {
+        label: '专家信息',
+        path: '/experts',
+        paramKey: 'expertId',
+        queryKey: 'keyword',
+        visibleKey: 'role',
+        visibleValue: 'EXPERT',
+        useDetail: true,
+        lookupApi: '/api/v1/admin/experts',
+        lookupParamKey: 'id',
+        lookupQueryKey: 'userId',
+        lookupResultKey: 'id',
+        detailApi: '/api/v1/admin/experts/{id}',
+        missingMessage: '该用户已切换为专家身份，但还没有对应的专家档案，请先在专家内容里新增或补全专家资料。',
+      },
     ],
     columns: ['id', 'avatarUrl', 'username', 'nickname', 'mobile', 'email', 'role', 'studentName', 'status', 'registeredAt'],
     fields: [
@@ -701,7 +1183,7 @@ export const resources = {
   }),
   students: resource({
     title: '学员管理',
-    description: '查看、新增、维护和删除学员信息，可审核学员认证。',
+    description: '查看、新增、维护和删除学员信息，可审核学员认证；如需调整身份，请从用户信息入口维护用户资料。',
     api: {
       list: '/api/v1/admin/students',
       detail: '/api/v1/admin/students/{id}',
@@ -731,6 +1213,14 @@ export const resources = {
       }))
     },
     columns: ['id', 'avatarUrl', 'studentNo', 'realName', 'gender', 'age', 'mobile', 'province', 'city', 'certificationStatus', 'status'],
+    linkActions: [
+      {
+        label: '用户信息',
+        mode: 'edit-resource',
+        resourceKey: 'users',
+        recordIdKey: 'userId',
+      },
+    ],
     fields: [
       { key: 'studentNo', label: '学员编号' },
       { key: 'realName', label: '真实姓名', required: true },
@@ -797,6 +1287,7 @@ export const resources = {
       email: body.email || '',
       avatarUrl: body.avatarUrl || '',
       status: normalizeCommonStatus(body.status),
+      roleIds: Array.isArray(body.roleIds) ? body.roleIds.map(Number).filter(Boolean) : [],
     }),
     columns: ['id', 'avatarUrl', 'username', 'realName', 'mobile', 'email', 'status', 'lastLoginAt'],
     fields: [
@@ -807,6 +1298,15 @@ export const resources = {
       { key: 'email', label: '邮箱' },
       { key: 'avatarUrl', label: '头像' },
       { key: 'status', label: '状态', type: 'select', options: commonStatusOptions },
+      {
+        key: 'roleIds',
+        label: '绑定角色',
+        type: 'checkbox-group',
+        optionsUrl: '/api/v1/admin/system/roles',
+        valueKey: 'id',
+        labelKey: 'roleName',
+        itemType: 'number',
+      },
     ],
     actions: [
       {
@@ -826,7 +1326,17 @@ export const resources = {
         api: '/api/v1/admin/system/admins/{id}/roles',
         method: 'PUT',
         wrapArrayKey: 'ids',
-        fields: idListFields,
+        fields: [
+          {
+            key: 'ids',
+            label: '选择角色',
+            type: 'checkbox-group',
+            optionsUrl: '/api/v1/admin/system/roles',
+            valueKey: 'id',
+            labelKey: 'roleName',
+            itemType: 'number',
+          },
+        ],
       },
     ],
   }),
@@ -894,7 +1404,7 @@ export const resources = {
       delete: '/api/v1/admin/content/home/categories/{id}',
     },
     bodyTransform: (body) => ({
-      parentId: optionalNumber(body.parentId),
+      parentId: null,
       categoryName: body.categoryName || '',
       categoryCode: body.categoryCode || '',
       iconUrl: body.iconUrl || '',
@@ -902,11 +1412,18 @@ export const resources = {
       sortOrder: optionalNumber(body.sortOrder) ?? 0,
       status: normalizeCommonStatus(body.status),
     }),
-    columns: ['id', 'categoryName', 'categoryCode', 'parentId', 'status', 'sortOrder'],
+    columns: ['id', 'categoryName', 'categoryCode', 'status', 'sortOrder'],
     fields: [
-      { key: 'parentId', label: '父级 ID', type: 'number' },
       { key: 'categoryName', label: '分类名称' },
-      { key: 'categoryCode', label: '分类编码' },
+      { key: 'categoryCode', label: '分类类型', type: 'select', options: [
+        { label: '资讯', value: 'article' },
+        { label: '课程', value: 'course' },
+        { label: '专题', value: 'topic' },
+        { label: '图书', value: 'book' },
+        { label: '知识库', value: 'knowledge' },
+        { label: '播客', value: 'podcast' },
+        { label: '直播', value: 'live' },
+      ] },
       { key: 'iconUrl', label: '图标 URL' },
       { key: 'description', label: '描述', type: 'textarea' },
       { key: 'sortOrder', label: '排序', type: 'number' },
@@ -925,32 +1442,62 @@ export const resources = {
       categoryId: optionalNumber(body.categoryId),
       contentType: body.contentType || '',
       targetId: optionalNumber(body.targetId),
-      title: body.title || '',
-      coverUrl: body.coverUrl || '',
-      linkUrl: body.linkUrl || '',
       sortOrder: optionalNumber(body.sortOrder) ?? 0,
       startAt: body.startAt || null,
       endAt: body.endAt || null,
       status: normalizeCommonStatus(body.status),
     }),
-    columns: ['id', 'title', 'contentTypeLabel', 'targetTitle', 'targetAvailable', 'categoryId', 'status', 'sortOrder'],
+    async enrichRecords(records, { request }) {
+      const grouped = records.reduce((acc, record) => {
+        const type = record.contentType
+        if (!homeContentResourceConfigs[type]) return acc
+        acc[type] ||= []
+        acc[type].push(record)
+        return acc
+      }, {})
+
+      const extraMap = {}
+      for (const [type, items] of Object.entries(grouped)) {
+        const config = homeContentResourceConfigs[type]
+        const result = await request(`${config.listPath}?page=1&size=200`)
+        const recordsMap = Object.fromEntries(
+          ((result?.data?.records || [])).map((item) => [String(item.id), item]),
+        )
+        for (const item of items) {
+          const target = recordsMap[String(item.targetId)]
+          if (!target) continue
+          extraMap[item.id] = {
+            coverUrl: item.coverUrl || target[config.coverKey] || '',
+            displayCreatedAt: config.timeKeys.map((key) => target[key]).find(Boolean) || '',
+            contentTypeLabel: item.contentTypeLabel || config.typeLabel,
+            title: item.title || config.titleKeys.map((key) => target[key]).find(Boolean) || item.title,
+          }
+        }
+      }
+
+      return records.map((record) => ({
+        ...record,
+        ...(extraMap[record.id] || {}),
+      }))
+    },
+    columns: ['id', 'title', 'contentTypeLabel', 'coverUrl', 'displayCreatedAt'],
     fields: [
       { key: 'categoryId', label: '分类 ID', type: 'number' },
-      { key: 'contentType', label: '内容类型', type: 'select', options: [
-        { label: '课程', value: 'course' },
-        { label: '图书', value: 'book' },
-        { label: '播客', value: 'podcast' },
-        { label: '专题', value: 'topic' },
-        { label: '直播', value: 'live' },
-      ] },
+      { key: 'contentType', label: '内容类型', type: 'select', options: homeContentTypeOptions },
       { key: 'targetId', label: '目标 ID', type: 'number' },
-      { key: 'title', label: '标题' },
-      { key: 'coverUrl', label: '封面', type: 'cover-upload', usage: 'home-content-cover' },
-      { key: 'linkUrl', label: '链接 URL' },
       { key: 'sortOrder', label: '排序', type: 'number' },
       { key: 'startAt', label: '开始时间', type: 'datetime-local' },
       { key: 'endAt', label: '结束时间', type: 'datetime-local' },
       { key: 'status', label: '状态', type: 'select', options: commonStatusOptions },
+    ],
+    toolbarActions: [
+      { label: '资讯配置', configType: 'article', resultOnly: true, pending: true },
+      { label: '专题配置', configType: 'topic', resultOnly: true, pending: true },
+      { label: '课程配置', configType: 'course', resultOnly: true, pending: true },
+      { label: '图书配置', configType: 'book', resultOnly: true, pending: true },
+      { label: '播客配置', configType: 'podcast', resultOnly: true, pending: true },
+      { label: '知识库配置', configType: 'knowledge', resultOnly: true, pending: true },
+      { label: '直播配置', configType: 'live', resultOnly: true, pending: true },
     ],
   }),
   courses: resource({
@@ -1218,7 +1765,6 @@ export const resources = {
       { key: 'publishStatus', label: '发布状态', type: 'select', options: publishStatusOptions },
       { key: 'publishedAt', label: '发布时间', type: 'datetime-local' },
     ],
-    linkActions: [{ label: '播客音频', path: '/content/podcast-audios', paramKey: 'id', queryKey: 'podcastId' }],
     actions: [{ label: '审核', api: '/api/v1/admin/content/podcasts/{id}/review', method: 'PATCH', fields: auditFields }],
   }),
   podcastAudios: resource({
@@ -1430,6 +1976,9 @@ export const resources = {
         fields: [{ key: 'options', label: '选项 JSON 数组', type: 'json', placeholder: '[{\"optionKey\":\"A\",\"optionContent\":\"选项\",\"correct\":true,\"sortOrder\":1}]' }],
       },
     ],
+    searchable: true,
+    searchLabel: '题干',
+    searchPlaceholder: '按题干搜索',
   }),
   questionCategories: resource({
     title: '题库分类',
@@ -1454,6 +2003,9 @@ export const resources = {
       { key: 'sortOrder', label: '排序', type: 'number' },
       { key: 'status', label: '状态', type: 'select', options: commonStatusOptions },
     ],
+    searchable: true,
+    searchLabel: '分类名称',
+    searchPlaceholder: '按分类名称查询',
   }),
   liveSessions: resource({
     title: '直播管理',
@@ -1464,34 +2016,63 @@ export const resources = {
       update: '/api/v1/admin/live-sessions/{id}',
       delete: '/api/v1/admin/live-sessions/{id}',
     },
-    bodyTransform: (body) => ({
-      title: body.title || '',
-      coverUrl: body.coverUrl || '',
-      speakerName: body.speakerName || '',
-      anchorName: body.anchorName || '',
-      tags: body.tags || [],
-      liveUrl: body.liveUrl || '',
-      playbackUrl: body.playbackUrl || '',
-      startAt: body.startAt || null,
-      endAt: body.endAt || null,
-      reviewStatus: normalizeCommonStatus(body.reviewStatus, '0'),
-      liveStatus: normalizeCommonStatus(body.liveStatus, '0'),
-    }),
-    columns: ['id', 'coverUrl', 'title', 'speakerName', 'anchorName', 'reviewStatus', 'liveStatus', 'startAt', 'endAt'],
+    permissions: {
+      create: livePermissionRules.edit,
+      edit: livePermissionRules.edit,
+      delete: livePermissionRules.edit,
+    },
+    bodyTransform: (body) => {
+      const normalized = validateLiveSessionPayload({
+        ...body,
+        reviewStatus: normalizeCommonStatus(body.reviewStatus, '1'),
+        liveStatus: normalizeCommonStatus(body.liveStatus, '0'),
+      })
+
+      return {
+        title: normalized.title,
+        coverUrl: normalized.coverUrl || '',
+        speakerName: normalized.speakerName || '',
+        anchorName: normalized.anchorName || '',
+        streamName: normalized.streamName || '',
+        tags: Array.isArray(normalized.tags) ? normalized.tags : [],
+        liveUrl: normalized.liveUrl || '',
+        playbackUrl: normalized.playbackUrl || '',
+        startAt: normalized.startAt,
+        endAt: normalized.endAt,
+        reviewStatus: normalizeCommonStatus(normalized.reviewStatus, '1'),
+        liveStatus: normalizeCommonStatus(normalized.liveStatus, '0'),
+      }
+    },
+    columns: ['id', 'coverUrl', 'title', 'speakerName', 'anchorName', 'reviewStatus', 'liveStatus', 'startAt'],
+    queryFields: [
+      { key: 'reviewStatus', label: '审核状态', type: 'select', options: reviewStatusOptions },
+      {
+        key: 'liveStatus',
+        label: '直播状态',
+        type: 'select',
+        options: [
+          { label: '未开始', value: '0' },
+          { label: '直播中', value: '1' },
+          { label: '已结束', value: '2' },
+          { label: '已取消', value: '3' },
+        ],
+      },
+    ],
     fields: [
-      { key: 'title', label: '标题' },
+      { key: 'title', label: '标题', required: true },
       { key: 'coverUrl', label: '封面', type: 'cover-upload', usage: 'live-cover' },
       { key: 'speakerName', label: '主讲人' },
       { key: 'anchorName', label: '主播' },
+      { key: 'streamName', label: '直播流名称', placeholder: '可留空，后端自动生成' },
       { key: 'tags', label: '标签 JSON 数组', type: 'json', placeholder: '[\"直播\",\"答疑\"]' },
-      { key: 'liveUrl', label: '直播 URL' },
-      { key: 'playbackUrl', label: '回放 URL' },
-      { key: 'startAt', label: '开始时间', type: 'datetime-local' },
+      { key: 'liveUrl', label: '直播 URL', placeholder: '通常留空，由后端自动生成' },
+      { key: 'playbackUrl', label: '回放 URL', placeholder: '通常留空，由后端自动生成' },
+      { key: 'startAt', label: '开始时间', type: 'datetime-local', required: true },
       { key: 'endAt', label: '结束时间', type: 'datetime-local' },
-      { key: 'reviewStatus', label: '审核状态', type: 'select', options: reviewStatusOptions },
-      { key: 'liveStatus', label: '直播状态', type: 'select', options: [{ label: '未开始', value: '0' }, { label: '直播中', value: '1' }, { label: '已结束', value: '2' }, { label: '已取消', value: '3' }] },
+      { key: 'reviewStatus', label: '审核状态', type: 'select', options: reviewStatusOptions, defaultValue: '1', required: true },
+      { key: 'liveStatus', label: '直播状态', type: 'select', options: [{ label: '未开始', value: '0' }, { label: '直播中', value: '1' }, { label: '已结束', value: '2' }, { label: '已取消', value: '3' }], defaultValue: '0', required: true },
     ],
-    actions: [{ label: '审核', api: '/api/v1/admin/live-sessions/{id}/review', method: 'PATCH', fields: auditFields }],
+    actions: [{ label: '审核', api: '/api/v1/admin/live-sessions/{id}/review', method: 'PATCH', fields: auditFields, permission: livePermissionRules.review }],
     toolbarActions: [
       {
         label: '批量删除直播',
@@ -1499,20 +2080,41 @@ export const resources = {
         method: 'POST',
         wrapArrayKey: 'ids',
         fields: idListFields,
+        permission: livePermissionRules.edit,
       },
     ],
     linkActions: [
-      { label: '直播视频', path: '/live-sessions/videos', paramKey: 'id', queryKey: 'liveSessionId' },
-      { label: '流配置', path: '/live-sessions/streaming', paramKey: 'id', queryKey: 'id' },
+      { label: '直播视频', path: '/live-sessions/videos', paramKey: 'id', queryKey: 'liveSessionId', permission: livePermissionRules.view },
+      { label: '流配置', path: '/live-sessions/streaming', paramKey: 'id', queryKey: 'id', permission: livePermissionRules.view },
     ],
+    searchable: true,
+    searchLabel: '标题',
+    searchPlaceholder: '按直播标题搜索',
   }),
   liveSessionStreaming: resource({
     title: '直播流配置',
     api: {
       list: '/api/v1/admin/live-sessions/{id}/streaming',
     },
+    permissions: {
+      create: livePermissionRules.view,
+      edit: livePermissionRules.view,
+      delete: livePermissionRules.view,
+    },
     pathParams: [{ key: 'id', label: '直播 ID', required: true }],
-    columns: ['streamName', 'publishUrl', 'httpFlvUrl', 'hlsUrl', 'callbackUrl', 'liveUrl', 'playbackUrl', 'reviewStatus', 'liveStatus'],
+    columns: ['streamName', 'publishUrl', 'publishServer', 'httpFlvUrl', 'hlsUrl', 'liveUrl', 'playbackUrl', 'reviewStatus', 'liveStatus'],
+    fields: [
+      { key: 'streamName', label: '流名称' },
+      { key: 'publishUrl', label: '推流地址' },
+      { key: 'publishServer', label: 'OBS 服务器', format: buildLivePublishServer },
+      { key: 'httpFlvUrl', label: 'FLV 地址' },
+      { key: 'hlsUrl', label: 'HLS 地址' },
+      { key: 'callbackUrl', label: '回调地址' },
+      { key: 'liveUrl', label: '直播地址' },
+      { key: 'playbackUrl', label: '回放地址' },
+      { key: 'reviewStatus', label: '审核状态', type: 'select', options: reviewStatusOptions },
+      { key: 'liveStatus', label: '直播状态', type: 'select', options: [{ label: '未开始', value: '0' }, { label: '直播中', value: '1' }, { label: '已结束', value: '2' }, { label: '已取消', value: '3' }] },
+    ],
     readonly: true,
     singleResult: true,
   }),
@@ -1524,23 +2126,28 @@ export const resources = {
       update: '/api/v1/admin/live-sessions/videos/{id}',
       delete: '/api/v1/admin/live-sessions/videos/{id}',
     },
+    permissions: {
+      create: livePermissionRules.edit,
+      edit: livePermissionRules.edit,
+      delete: livePermissionRules.edit,
+    },
     bodyTransform: (body) => ({
       liveSessionId: optionalNumber(body.liveSessionId),
-      title: body.title || '',
-      videoUrl: body.videoUrl || '',
+      title: String(body.title || '').trim(),
+      videoUrl: String(body.videoUrl || '').trim(),
       durationSeconds: optionalNumber(body.durationSeconds) ?? 0,
       sortOrder: optionalNumber(body.sortOrder) ?? 0,
-      status: normalizeCommonStatus(body.status),
+      status: normalizeCommonStatus(body.status, '1'),
     }),
     pathParams: [{ key: 'liveSessionId', label: '直播 ID', required: true }],
     columns: ['id', 'liveSessionId', 'title', 'videoUrl', 'durationSeconds', 'sortOrder', 'status'],
     fields: [
-      { key: 'liveSessionId', label: '直播 ID', type: 'number' },
-      { key: 'title', label: '视频标题' },
-      { key: 'videoUrl', label: '视频地址' },
+      { key: 'liveSessionId', label: '直播 ID', type: 'number', required: true },
+      { key: 'title', label: '视频标题', required: true },
+      { key: 'videoUrl', label: '视频地址', required: true },
       { key: 'durationSeconds', label: '时长秒数', type: 'number' },
       { key: 'sortOrder', label: '排序', type: 'number' },
-      { key: 'status', label: '状态', type: 'select', options: commonStatusOptions },
+      { key: 'status', label: '状态', type: 'select', options: commonStatusOptions, defaultValue: '1', required: true },
     ],
   }),
   qaQuestions: resource({
@@ -1598,6 +2205,9 @@ export const resources = {
         ],
       },
     ],
+    searchable: true,
+    searchLabel: '问题标题',
+    searchPlaceholder: '按问题标题搜索',
   }),
   feedbacks: resource({
     title: '反馈管理',
@@ -1613,6 +2223,9 @@ export const resources = {
     },
     readonly: true,
     actions: [{ label: '处理反馈', api: '/api/v1/admin/interaction/feedbacks/{id}/process', method: 'PATCH', fields: processFields }],
+    searchable: true,
+    searchLabel: '反馈内容',
+    searchPlaceholder: '按反馈内容搜索',
   }),
   knowledgeEntries: resource({
     title: '知识库条目',
@@ -1719,11 +2332,12 @@ export const resources = {
       },
     ],
   }),
-  interactionStats: resource({
-    title: '互动统计',
-    api: { list: '/api/v1/admin/statistics/content-interactions' },
-    columns: ['resourceType', 'resourceId', 'browseCount', 'favoriteCount', 'shareCount', 'uniqueBrowseUsers'],
+  examDashboardStats: resource({
+    title: '考核数据大屏',
+    api: { list: '/api/v1/admin/learning/exam-assessments' },
     readonly: true,
+    searchable: false,
+    columns: ['id', 'assessmentName', 'status', 'startAt', 'endAt'],
   }),
 }
 

@@ -10,7 +10,6 @@
       </div>
 
       <nav class="admin-menu" aria-label="管理端菜单">
-        <RouterLink class="menu-link menu-link--home" to="/dashboard">工作桌面</RouterLink>
         <section
           v-for="group in menuGroups"
           :key="group.title"
@@ -86,10 +85,13 @@ const groupIcons = {
   首页管理: '◈',
   课程管理: '◒',
   图书管理: '▤',
-  内容管理: '▦',
+  资讯管理: '▦',
+  播客管理: '♪',
+  专题管理: '◎',
   专家管理: '◉',
   题库管理: '≡',
   统计管理: '◫',
+  考核数据大屏: '⬢',
   直播管理: '▶',
   答疑管理: '?',
   反馈管理: '✎',
@@ -102,6 +104,7 @@ function getGroupIcon(title) {
 
 function getItemIcon(title) {
   if (title.includes('用户') || title.includes('学员') || title.includes('管理员')) return '♟'
+  if (title.includes('统计')) return '◌'
   if (title.includes('分类')) return '▦'
   if (title.includes('列表') || title.includes('记录')) return '▤'
   return '▪'
@@ -138,7 +141,10 @@ async function refreshAdminSession() {
   const result = await getCurrentAdmin()
   if (result.data) {
     admin.value = result.data
-    saveAdminInfo(result.data)
+    saveAdminInfo({
+      ...result.data,
+      permissions: Array.isArray(result.data?.permissions) ? result.data.permissions : admin.value?.permissions || [],
+    })
   }
 }
 

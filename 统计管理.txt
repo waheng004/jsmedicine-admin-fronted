@@ -1,0 +1,318 @@
+统计管理模块接口缺口清单
+复核基准：后端仓库 main 分支最新 api.json
+复核时间：2026-06-09
+
+当前前端已按最新 api.json 复核。
+结论：统计管理相关接口目前仍只有“汇总类接口”，还不足以完成手册里的 4 个统计页面。
+
+当前后端已有的统计相关接口：
+
+1. 学时统计
+- GET /api/v1/admin/statistics/study-hours/summary
+- GET /api/v1/admin/statistics/study-hours/resources
+
+2. 学员统计
+- GET /api/v1/admin/statistics/students/summary
+- GET /api/v1/admin/students
+- GET /api/v1/admin/content/topics
+
+3. 地区学员统计
+- GET /api/v1/admin/statistics/regions
+
+4. 学员成绩统计
+- GET /api/v1/admin/statistics/exam-scores/summary
+- GET /api/v1/admin/statistics/exam-scores/papers
+
+这些接口目前能做的事情：
+- 学时总览
+- 资源维度学时统计
+- 学员总览
+- 学员基础列表
+- 专题基础列表
+- 地区学员数量统计
+- 试卷维度成绩汇总
+
+这些接口目前不能完成手册要求的事情。
+
+--------------------------------------------------
+一、学时统计页面缺口
+--------------------------------------------------
+
+手册页面目标：
+- 学时统计按地区统计
+- 可以先选省
+- 再按市细分
+- 还可以按区细分
+- 图表展示某地区的学时，不是资源类型学时
+
+当前已有接口问题：
+- /api/v1/admin/statistics/study-hours/summary
+  只能给总览
+- /api/v1/admin/statistics/study-hours/resources
+  只能按资源类型返回学时
+- 不能按省、市、区返回学时统计结果
+
+当前结论：
+缺少“按地区聚合学时”的接口
+
+前端需要的最少能力：
+- 按省返回各市学时
+- 按市返回各区学时
+- 支持 province / city / district 筛选
+
+建议接口：
+- GET /api/v1/admin/statistics/study-hours/regions?province=&city=&district=&dimension=province|city|district
+
+建议返回字段：
+- province
+- city
+- district
+- totalStudyHours
+
+建议最好再补充：
+- studentCount
+- completedCount
+- averageStudyHours
+- averageProgressPercent
+
+
+--------------------------------------------------
+二、学员统计页面缺口
+--------------------------------------------------
+
+手册页面目标：
+选择一个专题后，再按市和区筛选，显示：
+- 总学员数
+- 专题学员数
+- 专题学习中学员数
+- 专题未学习学员数
+
+并显示学员明细：
+- 姓名
+- 性别
+- 联系方式
+- 年龄
+- 文化程度
+- 工作单位
+- 职业类型
+- 学时
+- 是否学习本专题
+
+当前已有接口问题：
+- /api/v1/admin/statistics/students/summary
+  只有全局汇总
+- /api/v1/admin/students
+  只有普通学员列表
+- /api/v1/admin/content/topics
+  只有专题列表
+
+当前缺少：
+- 学员和专题的学习关系接口
+- 专题学员明细接口
+- 专题学习状态接口
+- 专题学时接口
+
+当前结论：
+缺少“专题维度学员统计明细”接口
+
+建议接口：
+- GET /api/v1/admin/statistics/topics/{topicId}/students?page=&size=&city=&district=&keyword=&sort=
+或
+- GET /api/v1/admin/statistics/student-topic-learning?topicId=&city=&district=&page=&size=&keyword=&sort=
+
+建议返回结构：
+
+summary:
+- totalStudents
+- topicStudents
+- learningStudents
+- notStartedStudents
+
+records:
+- studentId
+- realName
+- gender
+- mobile
+- age
+- educationLevel
+- organization
+- practiceTypeName
+- studyHours
+- topicLearningStatus
+- isLearningCurrentTopic
+
+需要后端明确：
+- “学习中”定义
+- “未学习”定义
+- 是否还有“已完成”状态
+- 学时是否只统计当前专题
+
+
+--------------------------------------------------
+三、地区学员统计页面缺口
+--------------------------------------------------
+
+手册页面目标：
+- 以市为单位统计学时
+- 展示柱状图
+
+当前已有接口：
+- GET /api/v1/admin/statistics/regions
+
+当前字段只有：
+- province
+- city
+- studentCount
+- approvedStudentCount
+- enabledStudentCount
+
+当前已有接口问题：
+- 现在只能做“地区学员数量统计”
+- 不能做“地区学时柱状图”
+
+当前结论：
+缺少“地区学时聚合”字段或接口
+
+可选方案一：
+新增接口
+- GET /api/v1/admin/statistics/region-study-hours?province=
+
+建议返回：
+- province
+- city
+- totalStudyHours
+- averageStudyHours
+- studentCount
+- completedCount
+
+可选方案二：
+直接扩展现有接口
+- GET /api/v1/admin/statistics/regions
+
+增加字段：
+- totalStudyHours
+- averageStudyHours
+- completedCount
+
+最小可用字段：
+- province
+- city
+- totalStudyHours
+
+
+--------------------------------------------------
+四、学员成绩管理页面缺口
+--------------------------------------------------
+
+手册页面目标：
+列表展示每个学员的成绩明细，并支持修改：
+- 集中理论面授成绩
+- 临床实践成绩
+- 实践能力考核成绩
+- 理论考核成绩
+- 线上培训成绩
+
+修改时只需选择：
+- 合格
+- 不合格
+- 暂无
+
+当前已有接口：
+- GET /api/v1/admin/statistics/exam-scores/summary
+- GET /api/v1/admin/statistics/exam-scores/papers
+
+当前已有接口问题：
+- 这两个接口是“试卷维度汇总”
+- 不是“学员维度成绩明细”
+- 不能支撑成绩管理列表
+- 不能支撑单个学员成绩修改
+
+当前结论：
+缺少学员成绩明细查询接口
+缺少学员成绩保存接口
+
+建议新增接口 1：
+- GET /api/v1/admin/statistics/student-scores?page=&size=&keyword=
+
+建议返回字段：
+- studentId
+- realName
+- gender
+- mobile
+- theoryTrainingStatus
+- clinicalPracticeStatus
+- practicalAssessmentStatus
+- theoryAssessmentStatus
+- onlineTrainingStatus
+
+建议新增接口 2：
+- PATCH /api/v1/admin/statistics/student-scores/{studentId}
+或
+- PUT /api/v1/admin/statistics/student-scores/{studentId}
+
+建议请求体：
+{
+  "theoryTrainingStatus": "pass|fail|none",
+  "clinicalPracticeStatus": "pass|fail|none",
+  "practicalAssessmentStatus": "pass|fail|none",
+  "theoryAssessmentStatus": "pass|fail|none",
+  "onlineTrainingStatus": "pass|fail|none"
+}
+
+建议状态值统一：
+- pass
+- fail
+- none
+
+
+--------------------------------------------------
+五、当前前端实际状态
+--------------------------------------------------
+
+前端现在已经把统计管理页面结构做好了，但因为接口缺失，只能做到下面程度：
+
+1. 学时统计
+- 有省、市、区筛选 UI
+- 但真正学时统计还是只能显示资源维度
+- 不能显示地区学时图
+
+2. 学员统计
+- 有专题、城市、区县筛选 UI
+- 但专题学员数、学习中、未学习、学时都没有真实接口支撑
+
+3. 地区学员统计
+- 当前只能展示地区学员数量图
+- 还不能展示地区学时图
+
+4. 学员成绩管理
+- 已有页面和修改弹窗
+- 但修改只是前端本地暂存
+- 因为没有学员成绩明细查询和保存接口
+
+--------------------------------------------------
+六、建议后端优先补齐顺序
+--------------------------------------------------
+
+P1：
+1. 学时按省/市/区聚合接口
+2. 专题学员统计明细接口
+3. 学员成绩明细查询接口
+4. 学员成绩保存接口
+
+P2：
+5. 地区学员统计接口补充学时字段
+6. 统一专题学习状态和成绩状态枚举定义
+
+--------------------------------------------------
+七、简化结论
+--------------------------------------------------
+
+按最新 api.json 复核后，统计管理还缺这 4 类能力：
+
+1. 学时按地区聚合
+2. 专题维度学员统计明细
+3. 地区学时统计
+4. 学员成绩明细查询 + 修改保存
+
+这些能力当前都不在最新 api.json 里。
+前端可以继续配合，但需要后端先补契约。
